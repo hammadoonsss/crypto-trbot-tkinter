@@ -43,12 +43,6 @@ class Root(tk.Tk):
         self._trades_frame = TradeWatch(self._right_frame, bg=BG_COLOR)
         self._trades_frame.pack(side=tk.TOP)
 
-        # Static Message
-
-        # self.logging_frame.add_log("This is a Test Message")
-        # time.sleep(2)
-        # self.logging_frame.add_log("This is an another Test Message")
-
         self._update_ui()
 
     def _update_ui(self):

@@ -265,17 +265,10 @@ class BitmexClient:
                     except RuntimeError as e:
                         logger.error("Error while looping through the Bitmex strategies: %s", e)
 
-                    # print(symbol, self.prices[symbol])
-
-                    # if symbol == "XBTUSD":
-                    #     self._add_log(symbol + " " + str(self.prices[symbol]['bid']) + " / " + 
-                    #                                  str(self.prices[symbol]['ask']))
-
             if data['table'] == "trade":
-
                 for d in data['data']:
-
                     symbol = d['symbol']
+
                     # timestamp represents the time of the trade
                     ts = int(dateutil.parser.isoparse(d['timestamp']).timestamp() * 1000)
 
@@ -283,6 +276,7 @@ class BitmexClient:
                         if strat.contract.symbol == symbol:
                             res = strat.parse_trade(float(d['price']), float(d['size']), ts)
                             strat.check_trade(res)
+
 
     def subscribe_channel(self, topic: str):
         data = dict()
@@ -294,6 +288,7 @@ class BitmexClient:
             self._ws.send(json.dumps(data))
         except Exception as e:
             logger.error("Websocket error while subscribing to %s updates: %s", topic, e)
+
 
     def get_trade_size(self, contract: Contract, price: float, balance_pct: float):
         """

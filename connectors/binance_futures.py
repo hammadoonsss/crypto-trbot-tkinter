@@ -158,7 +158,6 @@ class BinanceFuturesClient:
         data['type'] = order_type
 
         if price is not None:
-            # data['price'] = price
             data['price'] = round(round(price /  contract.tick_size) * contract.tick_size, 8)
 
         if tif is not None:
@@ -219,9 +218,7 @@ class BinanceFuturesClient:
     def _on_open(self, ws):
         logger.info("Binance connection opened")
 
-        # self.subscribe_channel(self.contracts['BTCUSDT'])
         self.subscribe_channel(list(self.contracts.values()), "bookTicker")
-        # self.subscribe_channel(list(self.contracts.values()), "aggTrade")
 
     def _on_close(self, ws):
         logger.warning("Binance Websocket connection closed")
@@ -230,7 +227,6 @@ class BinanceFuturesClient:
         logger.error("Binance connection error: %s", msg)
 
     def _on_message(self, ws, msg: str):
-        # print(msg)
         data = json.loads(msg)
 
         if "e" in data:
@@ -261,13 +257,6 @@ class BinanceFuturesClient:
 
                 except RuntimeError as e:
                     logger.error("Error while looping through the Binance strategies: %s", e)
-
-                # print(symbol, self.prices[symbol])
-
-                # if symbol == "BTCUSDT":
-                #     self._add_log(symbol + " " + str(self.prices[symbol]['bid']) + " / " + 
-                #                                     str(self.prices[symbol]['ask']))
-
 
             if data['e'] == "aggTrade":
                 
