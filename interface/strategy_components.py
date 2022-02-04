@@ -2,6 +2,7 @@ import tkinter as tk
 import typing
 
 from interface.styling import *
+from interface.scrollable_frame import ScrollableFrame
 
 from connectors.binance_futures import BinanceFuturesClient
 from connectors.bitmex import BitmexClient
@@ -46,7 +47,7 @@ class StrategyEditor(tk.Frame):
 
       self.body_widgets = dict()
 
-      self._headers = ["Strategy", "Contract", "Timeframe", "Bal %", "TP %", "SL %"]
+      self._headers_frame = tk.Frame(self._table_frame, bg=BG_COLOR)
 
       self._additional_parameters = dict()
       self._extra_input = dict() 
@@ -55,22 +56,22 @@ class StrategyEditor(tk.Frame):
       self._base_params = [
 
         {"code_name": "strategy_type", "widget": tk.OptionMenu, "data_type": str,
-         "values": ["Technical", "Breakout"], "width": 10},
+         "values": ["Technical", "Breakout"], "width": 10, "header": "Strategy"},
         {"code_name": "contract", "widget": tk.OptionMenu, "data_type": str, "values": self._all_contracts,
-         "width": 18},
+         "width": 16, "header": "Contract"},
         {"code_name": "timeframe", "widget": tk.OptionMenu, "data_type": str, "values": self._all_timeframes,
-         "width": 7},
+         "width": 9, "header": "Timeframe"},
 
-        {"code_name": "balance_pct", "widget": tk.Entry, "data_type": float, "width": 7},
-        {"code_name": "take_profit", "widget": tk.Entry, "data_type": float, "width": 7},
-        {"code_name": "stop_loss", "widget": tk.Entry, "data_type": float, "width": 7},
+        {"code_name": "balance_pct", "widget": tk.Entry, "data_type": float, "width": 7, "header": "Bal %"},
+        {"code_name": "take_profit", "widget": tk.Entry, "data_type": float, "width": 7, "header": "TP %"},
+        {"code_name": "stop_loss", "widget": tk.Entry, "data_type": float, "width": 7, "header": "SL %"},
 
         {"code_name": "parameters", "widget": tk.Button, "data_type": float, "text": "Parameters",
-         "bg": BG_COLOR_2, "command": self._show_popup },
+         "bg": BG_COLOR_2, "command": self._show_popup, "width": 7,  "header": ""},
         {"code_name": "activation", "widget": tk.Button, "data_type": float, "text": "OFF",
-         "bg": "darkred", "command": self._switch_strategy},
+         "bg": "darkred", "command": self._switch_strategy, "width": 5, "header": ""},
         {"code_name": "delete", "widget": tk.Button, "data_type": float, "text": "X",
-         "bg": "darkred", "command": self._delete_row},
+         "bg": "darkred", "command": self._delete_row, "width": 4, "header": ""},
 
       ]
 
@@ -88,10 +89,20 @@ class StrategyEditor(tk.Frame):
         ]
       }
 
-      for idx, h in enumerate(self._headers):
-          header = tk.Label(self._table_frame, text=h, font=BOLD_FONT,
-                            bg=BG_COLOR, fg=FG_COLOR)
-          header.grid(row=0, column=idx)
+      for idx, h in enumerate(self._base_params):
+          header = tk.Label(self._headers_frame, text=h['header'], font=GLOBAL_FONT, bg=BG_COLOR, fg=FG_COLOR,
+                            width=h['width'], bd=1, relief=tk.FLAT)
+          header.grid(row=0, column=idx, padx=2)
+
+      header = tk.Label(self._headers_frame, text=h['header'], font=GLOBAL_FONT, bg=BG_COLOR, fg=FG_COLOR, 
+                        width=10, bd=1, relief=tk.FLAT)
+      header.grid(row=0, column=len(self._base_params), padx=2)
+
+      self._headers_frame.pack(side=tk.TOP, anchor="nw")
+      
+      self._body_frame = ScrollableFrame(self._table_frame, bg=BG_COLOR, height=250)
+      self._body_frame.pack(side=tk.TOP, fill=tk.X, anchor="nw")
+
 
       for h in self._base_params:
           self.body_widgets[h['code_name']] = dict()
@@ -115,14 +126,14 @@ class StrategyEditor(tk.Frame):
       if base_param['widget'] == tk.OptionMenu:
         self.body_widgets[code_name + "_var"][b_index] = tk.StringVar()
         self.body_widgets[code_name + "_var"][b_index].set(base_param['values'][0])
-        self.body_widgets[code_name][b_index] = tk.OptionMenu(self._table_frame,
+        self.body_widgets[code_name][b_index] = tk.OptionMenu(self._body_frame.sub_frame,
                                                               self.body_widgets[code_name + "_var"][b_index],
                                                               *base_param['values'])
-        self.body_widgets[code_name][b_index].config(width=base_param['width'])
+        self.body_widgets[code_name][b_index].config(width=base_param['width'], bd=0, indicatoron=0)
 
       elif base_param['widget'] == tk.Entry:
-        self.body_widgets[code_name][b_index] = tk.Entry(self._table_frame, justify=tk.CENTER,
-                                                         width=base_param['width'])
+        self.body_widgets[code_name][b_index] = tk.Entry(self._body_frame.sub_frame, justify=tk.CENTER,
+                                                         width=base_param['width'], font=GLOBAL_FONT, bd=1)
 
         if base_param['data_type'] == int:
           self.body_widgets[code_name][b_index].config(validate='key', validatecommand=(self._valid_integer, '%P'))
@@ -131,14 +142,14 @@ class StrategyEditor(tk.Frame):
           self.body_widgets[code_name][b_index].config(validate='key', validatecommand=(self._valid_float, '%P'))
 
       elif base_param['widget'] == tk.Button:
-        self.body_widgets[code_name][b_index] = tk.Button(self._table_frame, text=base_param['text'],
-                              bg=base_param['bg'], fg=FG_COLOR,
+        self.body_widgets[code_name][b_index] = tk.Button(self._body_frame.sub_frame, text=base_param['text'],
+                              bg=base_param['bg'], fg=FG_COLOR, font=GLOBAL_FONT,width=base_param['width'],
                               command=lambda frozen_command=base_param['command']:frozen_command(b_index))
                                             
       else:
         continue
 
-      self.body_widgets[code_name][b_index].grid(row=b_index, column=col)
+      self.body_widgets[code_name][b_index].grid(row=b_index, column=col, padx=2)
 
     self._additional_parameters[b_index] = dict()
 
