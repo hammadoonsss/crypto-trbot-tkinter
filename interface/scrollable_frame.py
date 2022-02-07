@@ -37,15 +37,12 @@ class ScrollableFrame(tk.Frame):
   """
 
   def _activate_mousewheel(self, event: tk.Event):
-    print("Activate MW")
     self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
   def _deactivate_mousewheel(self, event: tk.Event):
-    print("Deactivate MW")
     self.canvas.unbind_all("<MouseWheel>")
 
   def _on_mousewheel(self, event: tk.Event):
-    print("MouseWheel scroll")
     self.canvas.yview_scroll(int(-1 * (event.delta / 60)), "units")
 
 

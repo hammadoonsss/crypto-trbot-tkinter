@@ -289,7 +289,7 @@ class StrategyEditor(tk.Frame):
         self._exchanges[exchange].subscribe_channel([contract], "aggTrade")
 
 
-      # new_strategy._check_signal()
+      new_strategy._check_signal()
       self._exchanges[exchange].strategies[b_index] = new_strategy
       
       

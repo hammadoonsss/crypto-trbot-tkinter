@@ -17,8 +17,6 @@ class Watchlist(tk.Frame):
         self.binance_symbols = list(binance_contracts.keys())
         self.bitmex_symbols = list(bitmex_contracts.keys())
 
-        # print(self.binance_symbols)
-
         self._commands_frame = tk.Frame(self, bg=BG_COLOR)
         self._commands_frame.pack(side=tk.TOP)
 

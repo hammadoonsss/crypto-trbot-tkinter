@@ -219,33 +219,65 @@ class TechnicalStrategy(Strategy):
 
     self._rsi_length = other_params['rsi_length']
 
+
+  def _bollinger_band(self):
+    """
+      Bollinger Bands (BB)
+    """
+    close_list = []
+    bb_period = 20
+    bb_multiplier = 2
+
+    for candle in self.candles:
+      close_list.append(candle.close)
+
+    try:
+      closes = pd.Series(close_list)
+
+      # print("Closes______________________", closes)
+      ma = closes.rolling(bb_period).mean()
+      std = closes.rolling(bb_period).std()
+
+      upper_band = ma + bb_multiplier * std
+      lower_band = ma - bb_multiplier * std
+
+      return upper_band.iloc[-2], lower_band.iloc[-2] 
+      
+    except Exception as e:
+      print("Error",e)
+  
+
   def _rsi(self):
     """
       Relative Strength Index (RSI) 
     """
-    close_list =  []
+    close_list = []
     
     for candle in self.candles:
       close_list.append(candle.close)
 
-    closes = pd.Series(close_list)
+    try:
+      closes = pd.Series(close_list)
 
-    delta = closes.diff().dropna()
+      delta = closes.diff().dropna()
+      up, down = delta.copy(), delta.copy()
 
-    up, down = delta.copy(), delta.copy()
+      up[up < 0] = 0
+      down[down > 0] = 0
 
-    up[up < 0] = 0
-    down[down > 0] = 0
+      avg_gain = up.ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean() # com - center of mass
+      avg_loss = down.abs().ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean()
 
-    avg_gain = up.ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean() # com - center of mass
-    avg_loss = down.abs().ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean()
+      rs = avg_gain/avg_loss
 
-    rs = avg_gain/avg_loss
+      rsi = 100 - ( 100 / ( 1 + rs ) )
+      rsi.round(2)
 
-    rsi = 100 - ( 100 / ( 1 + rs ) )
-    rsi.round(2)
+      return rsi.iloc[-2]
 
-    return rsi.iloc[-2]
+    except Exception as e:
+      print("Error", e)
+      
 
 
   def _macd(self) -> Tuple[float, float]:
@@ -262,16 +294,21 @@ class TechnicalStrategy(Strategy):
     
     for candle in self.candles:
       close_list.append(candle.close)
+    
+    try:
+      closes = pd.Series(close_list)
 
-    closes = pd.Series(close_list)
+      ema_fast = closes.ewm(span=self._ema_fast).mean() # ewm() -  Exponential Weighted functions
+      ema_slow = closes.ewm(span=self._ema_slow).mean()
 
-    ema_fast = closes.ewm(span=self._ema_fast).mean() # ewm() -  Exponential Weighted functions
-    ema_slow = closes.ewm(span=self._ema_slow).mean()
+      macd_line =  ema_fast - ema_slow      # macd of last finished candle
+      macd_signal = macd_line.ewm(span=self._ema_signal).mean()
 
-    macd_line =  ema_fast - ema_slow      # macd of last finished candle
-    macd_signal = macd_line.ewm(span=self._ema_signal).mean()
+      return macd_line.iloc[-2], macd_signal.iloc[-2]
+      
+    except Exception as e:
+      print("Error", e)
 
-    return macd_line.iloc[-2], macd_signal.iloc[-2]
 
   def _check_signal(self):
     """
@@ -281,8 +318,11 @@ class TechnicalStrategy(Strategy):
 
     macd_line, macd_signal = self._macd()
     rsi =  self._rsi()
+    bollinger_up, bollinger_down = self._bollinger_band()
 
-    # print("RSI: ",rsi, "MACDLine: ", macd_line, "MACDSignal", macd_signal)
+    print("RSI: ", rsi)
+    print("MACDLine: ", macd_line, "MACDSignal: ", macd_signal)
+    print( "BB_up: ", bollinger_up, "BB_down:", bollinger_down)
 
     if rsi < 30 and macd_line > macd_signal:
       return 1
