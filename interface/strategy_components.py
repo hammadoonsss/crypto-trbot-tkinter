@@ -284,6 +284,9 @@ class StrategyEditor(tk.Frame):
       if len(new_strategy.candles) == 0:
         self.root.logging_frame.add_log(f"No Historical data retrieved for {contract.symbol}")
         return
+      else:
+        self.root.logging_frame.add_log(f"Historical data retrieved for {contract.symbol}")
+      
 
       if exchange == "Binance":
         self._exchanges[exchange].subscribe_channel([contract], "aggTrade")

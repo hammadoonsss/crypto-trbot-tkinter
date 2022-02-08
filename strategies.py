@@ -247,6 +247,76 @@ class TechnicalStrategy(Strategy):
       print("Error",e)
   
 
+  def _adx(self):
+    """
+      Average Directional Index (ADX) - One Way
+    """
+    high_list = []
+    low_list = []
+    close_list = []
+    lookback = 14
+
+    for candle in self.candles:
+      high_list.append(candle.high)
+      low_list.append(candle.low)
+      close_list.append(candle.close)
+    
+    try:
+      highes = pd.Series(high_list)
+      lows = pd.Series(low_list)
+      closes = pd.Series(close_list)
+
+      print("highes", highes)
+      print("lows", lows)
+      print("closes", closes)
+
+      plus_dm = highes.diff().dropna()
+      minus_dm = lows.diff().dropna()
+
+      print("plus_dm!!!!!!!!!!!!! \n", plus_dm)
+      print("minus_dm!!!!!!!!!!!!!", minus_dm)
+
+
+      plus_dm[plus_dm < 0] = 0
+      minus_dm[minus_dm > 0] = 0
+
+      tr1 = pd.Series(highes - lows).dropna()
+      tr2 = pd.Series(abs(highes - closes.shift(1)).dropna())
+      tr3 = pd.Series(abs(lows - closes.shift(1).dropna()))
+
+      print("tr1--------------", tr1)
+      print("tr2--------------", tr2)
+      print("tr3--------------", tr3)
+
+      frames = [tr1, tr2, tr3]
+      tr = pd.concat(frames, axis=1, join='inner').max(axis=1)
+      atr = tr.rolling(lookback).mean().dropna()
+      # atr2 = tr.ewm(com=lookback, min_periods=lookback).mean().dropna()
+
+      print("tr_________-",tr)
+      print("atr________",atr)
+      # print("atr2________",atr2)
+
+
+      plus_di = 100 * (plus_dm.ewm(alpha = 1/lookback).mean() / atr).dropna()
+      minus_di = abs(100 * (minus_dm.ewm(alpha = 1/lookback).mean() / atr)).dropna()
+
+      print("plus_di((((((((((", plus_di)
+      print("minus_di)))))))))", minus_di)
+
+      dx = 100 * (abs(plus_di - minus_di) / abs(plus_di + minus_di)).dropna()
+      print("dx++++++++", dx)
+      adx = (((dx.shift(1) * (lookback - 1)) + dx) / lookback).dropna()
+      print("adx__________", adx)
+      adx_smooth = adx.ewm(alpha = 1 / lookback ).mean().dropna()
+      print("adx_smooth=====", adx_smooth)
+
+      return atr.iloc[-2], plus_di.iloc[-2], minus_di.iloc[-2], adx_smooth.iloc[-2]
+
+    except Exception as e:
+      print("Error", e)
+  
+
   def _rsi(self):
     """
       Relative Strength Index (RSI) 
@@ -319,10 +389,12 @@ class TechnicalStrategy(Strategy):
     macd_line, macd_signal = self._macd()
     rsi =  self._rsi()
     bollinger_up, bollinger_down = self._bollinger_band()
+    atr, plus_di, minus_di, adx_smooth = self._adx()
 
     print("RSI: ", rsi)
     print("MACDLine: ", macd_line, "MACDSignal: ", macd_signal)
     print( "BB_up: ", bollinger_up, "BB_down:", bollinger_down)
+    print("ATR: ", atr, "Plus_DI: ",plus_di, "Minus_DI: ", minus_di, "ADX_Smooth: ", adx_smooth)
 
     if rsi < 30 and macd_line > macd_signal:
       return 1
