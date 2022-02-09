@@ -5,6 +5,7 @@ from typing import *
 from threading import Timer
 
 import pandas as pd
+import numpy as np
 
 from models import *
 
@@ -249,7 +250,7 @@ class TechnicalStrategy(Strategy):
 
   def _adx(self):
     """
-      Average Directional Index (ADX) - One Way
+      Average Directional Index (ADX) - One Approch
     """
     high_list = []
     low_list = []
@@ -262,20 +263,13 @@ class TechnicalStrategy(Strategy):
       close_list.append(candle.close)
     
     try:
+
       highes = pd.Series(high_list)
       lows = pd.Series(low_list)
       closes = pd.Series(close_list)
 
-      print("highes", highes)
-      print("lows", lows)
-      print("closes", closes)
-
       plus_dm = highes.diff().dropna()
       minus_dm = lows.diff().dropna()
-
-      print("plus_dm!!!!!!!!!!!!! \n", plus_dm)
-      print("minus_dm!!!!!!!!!!!!!", minus_dm)
-
 
       plus_dm[plus_dm < 0] = 0
       minus_dm[minus_dm > 0] = 0
@@ -284,38 +278,73 @@ class TechnicalStrategy(Strategy):
       tr2 = pd.Series(abs(highes - closes.shift(1)).dropna())
       tr3 = pd.Series(abs(lows - closes.shift(1).dropna()))
 
-      print("tr1--------------", tr1)
-      print("tr2--------------", tr2)
-      print("tr3--------------", tr3)
-
       frames = [tr1, tr2, tr3]
       tr = pd.concat(frames, axis=1, join='inner').max(axis=1)
-      atr = tr.rolling(lookback).mean().dropna()
-      # atr2 = tr.ewm(com=lookback, min_periods=lookback).mean().dropna()
+      # atr = tr.rolling(lookback).mean().dropna()
+      atr2 = tr.ewm(com=lookback, min_periods=lookback).mean().dropna()
 
-      print("tr_________-",tr)
-      print("atr________",atr)
-      # print("atr2________",atr2)
-
-
-      plus_di = 100 * (plus_dm.ewm(alpha = 1/lookback).mean() / atr).dropna()
-      minus_di = abs(100 * (minus_dm.ewm(alpha = 1/lookback).mean() / atr)).dropna()
-
-      print("plus_di((((((((((", plus_di)
-      print("minus_di)))))))))", minus_di)
+      plus_di = 100 * (plus_dm.ewm(alpha = 1/lookback).mean() / atr2).dropna()
+      minus_di = abs(100 * (minus_dm.ewm(alpha = 1/lookback).mean() / atr2)).dropna()
 
       dx = 100 * (abs(plus_di - minus_di) / abs(plus_di + minus_di)).dropna()
-      print("dx++++++++", dx)
       adx = (((dx.shift(1) * (lookback - 1)) + dx) / lookback).dropna()
-      print("adx__________", adx)
-      adx_smooth = adx.ewm(alpha = 1 / lookback ).mean().dropna()
-      print("adx_smooth=====", adx_smooth)
+      adx_smooth = adx.ewm(alpha = 1 / lookback, min_periods=lookback ).mean().dropna()
 
-      return atr.iloc[-2], plus_di.iloc[-2], minus_di.iloc[-2], adx_smooth.iloc[-2]
+      return atr2.iloc[-2], plus_di.iloc[-2], minus_di.iloc[-2], adx_smooth.iloc[-2]
 
     except Exception as e:
       print("Error", e)
   
+
+  def _adxatr(self):
+    """
+      True Range and Average True Range (ATR)
+    """
+    n=14
+    high_list = []
+    low_list = []
+    close_list = []
+
+    for candle in self.candles:
+      high_list.append(candle.high)
+      low_list.append(candle.low)
+      close_list.append(candle.close)
+    
+    try:
+      highes = pd.Series(high_list)
+      lows = pd.Series(low_list)
+      close = pd.Series(close_list)
+
+      hl = (highes - lows)
+      hpc = (abs(highes - close.shift(1)))
+      lpc = (abs(lows - close.shift(1)))
+
+      frames = [hl, hpc, lpc]
+
+      tr = pd.concat(frames, axis=1, join='inner').max(axis=1, skipna=False)
+      atr = tr.ewm(com=n, min_periods=n).mean()
+
+      """
+      Average Directional Index (ADX) - Second Approch
+      """
+
+      upmove = (highes - highes.shift(1))
+      downmove = (lows.shift(1) - lows)
+
+      plus_dm = np.where((upmove > downmove) & (upmove > 0), upmove, 0.0)
+      minus_dm = np.where((downmove > upmove) & (downmove > 0), downmove, 0.0)
+
+      plus_di = 100 * (plus_dm / atr).ewm(com=n, min_periods=n).mean().dropna()
+      minus_di = 100 * (minus_dm / atr).ewm(com=n, min_periods=n).mean().dropna()
+
+      adx = 100 * abs((plus_di - minus_di) / (plus_di + minus_di)).ewm(com=n, min_periods=n).mean().dropna()
+      # print("adx2_______", adx.to_json())
+
+      return atr.iloc[-2], plus_di.iloc[-2], minus_di.iloc[-2], adx.iloc[-2]
+
+    except Exception as e:
+      print("Error: ", e)
+
 
   def _rsi(self):
     """
@@ -348,7 +377,6 @@ class TechnicalStrategy(Strategy):
     except Exception as e:
       print("Error", e)
       
-
 
   def _macd(self) -> Tuple[float, float]:
     """
@@ -390,11 +418,13 @@ class TechnicalStrategy(Strategy):
     rsi =  self._rsi()
     bollinger_up, bollinger_down = self._bollinger_band()
     atr, plus_di, minus_di, adx_smooth = self._adx()
+    atr2, plus_di2, minus_di2, adx2 = self._adxatr()
 
     print("RSI: ", rsi)
     print("MACDLine: ", macd_line, "MACDSignal: ", macd_signal)
     print( "BB_up: ", bollinger_up, "BB_down:", bollinger_down)
     print("ATR: ", atr, "Plus_DI: ",plus_di, "Minus_DI: ", minus_di, "ADX_Smooth: ", adx_smooth)
+    print("ATR2:__", atr2, "Plus_DI2: ",plus_di2, "Minus_DI2: ", minus_di2, "ADX2:", adx2 )
 
     if rsi < 30 and macd_line > macd_signal:
       return 1
