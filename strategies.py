@@ -250,7 +250,7 @@ class TechnicalStrategy(Strategy):
 
   def _adx(self):
     """
-      Average Directional Index (ADX) - One Approch
+      Average Directional Index (ADX) - One Approach
     """
     high_list = []
     low_list = []
@@ -311,6 +311,7 @@ class TechnicalStrategy(Strategy):
       close_list.append(candle.close)
     
     try:
+
       highes = pd.Series(high_list)
       lows = pd.Series(low_list)
       close = pd.Series(close_list)
@@ -325,7 +326,7 @@ class TechnicalStrategy(Strategy):
       atr = tr.ewm(com=n, min_periods=n).mean()
 
       """
-      Average Directional Index (ADX) - Second Approch
+      Average Directional Index (ADX) - Second Approach
       """
 
       upmove = (highes - highes.shift(1))
