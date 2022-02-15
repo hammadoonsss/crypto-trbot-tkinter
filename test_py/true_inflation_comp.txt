@@ -1,0 +1,19 @@
+// True Inflation Compensator (USD)
+
+study("True Inflation Compensator", overlay=true)
+
+i = input(title="Years to count inflation", defval=1, type=input.integer)
+smaLength = input(title="SMA Length", defval=1, type=input.integer)
+
+
+var yearago = 0
+yearagoFunct = if timeframe.isdaily
+  yearago := 365
+else if timeframe.isweekly
+  yearago := 52
+
+infl = ((security("FRED:M2", timeframe.period, close) + security("FRED:pcepilfe", timeframe.period, close))/2)
+drawInfl = close*(1/(infl/infl[i*yearago]))
+
+
+plot(sma(drawInfl, smaLength), color=color.orange, linewidth = 2)

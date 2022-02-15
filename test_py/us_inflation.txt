@@ -1,0 +1,50 @@
+// US Inflation Rate [nb]
+
+// This source code is subject to your prying eyes
+
+title = "US Inflation Rate"
+
+stitle = title + " [nb]"
+
+//@version=4
+
+study(title, stitle, precision=2)
+
+showEOY = input(false, "Show Inflation Of December")
+
+// Added gaps_on so there would be no confusion about past data representing month(s) with unpublished data
+
+cpi(oc) =>
+  tik = "FRED:CPIAUCSL"
+  eom = "M"
+  cpi = security(tik, eom, oc, lookahead=barmerge.lookahead_on, gaps=barmerge.gaps_on)
+
+avg_rate =
+cpi(
+roc(
+open,
+timeframe.ismonthly ? 12 / timeframe.multiplier : 12
+))
+
+avg_rate :=
+  change(month) ?
+  avg_rate :
+  avg_rate[1]
+
+dec_rate =
+  valuewhen(
+  month == 12,
+  avg_rate,
+  0)
+
+redline =
+  valuewhen(change(month), avg_rate, 0) >= 2 and
+  valuewhen(change(month), avg_rate, 1) >= 2 and
+  year >= 1995 ?
+  color.red : #84a0f6
+
+plot(showEOY ? dec_rate : na, "U.S. Inflation (Dec.)")
+plot(avg_rate, "U.S. Inflation", redline)
+hline(0)
+
+// plot(sum(avg_rate, 12))

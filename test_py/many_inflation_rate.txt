@@ -1,0 +1,26 @@
+// Many Inflation Rate
+
+title = "Inflation Rate"
+stitle = title + " [nb]"
+
+study(title, stitle, precision=2)
+
+cont = input('GBR', "Country",
+       options=['ARG', 'AUS', 'CAN', 'CHE', 'DEU', 'EUR', 'FRA', 'GBR', 'ITA', 'JPN', 'NZL', 'RUS', 'USA'],
+       type=input.string)
+
+showHline = input(false, "Show Zero Line")
+showCorre = input(false, "Show Correlation to Chart")
+
+qsrc = 'RATEINF/INFLATION_'
+
+avg_rate = quandl(qsrc + string(cont), barmerge.gaps_off, 0)
+
+corre = security(syminfo.tickerid, "M", correlation(avg_rate, close, timeframe.ismonthly ? floor(24) /
+timeframe.multiplier : 24))
+
+plot(showHline ? 0 : na, "hline", color.gray, trackprice=1, show_last=1, editable=0)
+
+plot(avg_rate, "Inflation", color.new(#84a0f6, 15), linewidth=2, style=plot.style_linebr)
+
+plot(showCorre ? corre : na, "Correlation", corre > 0 ? color.blue : color.red, linewidth=2, style=plot.style_histogram)

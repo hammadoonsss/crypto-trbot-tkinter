@@ -1,0 +1,20 @@
+// Total Inflation Model
+
+// Total Inflation = growth rate of money supply / economic output
+
+study("Total Inflation Model",overlay=false,precision=4,max_bars_back=1000)
+
+// USE ON "#M" TIMEFRAME
+
+cpi = security("FRED:CPIAUCSL","3M",close)
+gnp = security("QUANDL:FRED/GNPCA","3M",close)
+m2 = security("FRED:M2","3M",close)
+debt = security("QUANDL:FRED/TCMDO","3M",close)
+
+g_cpi = (cpi/cpi[4]-1)*100
+
+i = (m2+debt)/gnp
+inf_model = (i/i[4] - 1)*100
+
+plot(g_cpi,color=color.red,linewidth=1,title="CPI")
+plot(inf_model,color=color.blue,linewidth=2,title="Total Inflation Model")
