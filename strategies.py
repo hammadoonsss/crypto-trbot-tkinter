@@ -9,6 +9,8 @@ import numpy as np
 
 from models import *
 
+from stocktrends import Renko
+
 if TYPE_CHECKING:
   from connectors.bitmex import BitmexClient
   from connectors.binance_futures import BinanceFuturesClient
@@ -245,12 +247,12 @@ class TechnicalStrategy(Strategy):
       return upper_band.iloc[-2], lower_band.iloc[-2] 
       
     except Exception as e:
-      print("Error",e)
+      print("Error in BB: ", e)
   
 
   def _adx(self):
     """
-      Average Directional Index (ADX) - One Approach
+      Average Directional Index (ADX) - 1st Approach
     """
     high_list = []
     low_list = []
@@ -293,7 +295,7 @@ class TechnicalStrategy(Strategy):
       return atr2.iloc[-2], plus_di.iloc[-2], minus_di.iloc[-2], adx_smooth.iloc[-2]
 
     except Exception as e:
-      print("Error", e)
+      print("Error in ADXATR1:", e)
   
 
   def _adxatr(self):
@@ -326,7 +328,7 @@ class TechnicalStrategy(Strategy):
       atr = tr.ewm(com=n, min_periods=n).mean()
 
       """
-      Average Directional Index (ADX) - Second Approach
+      Average Directional Index (ADX) - 2nd Approach
       """
 
       upmove = (highes - highes.shift(1))
@@ -344,12 +346,12 @@ class TechnicalStrategy(Strategy):
       return atr.iloc[-2], plus_di.iloc[-2], minus_di.iloc[-2], adx.iloc[-2]
 
     except Exception as e:
-      print("Error: ", e)
+      print("Error in ADXATR2: ", e)
       
 
   def _adxatrcom(self):
     """
-      ATR and ADX - Third Approach 
+      ATR and ADX - 3rd Approach 
     """
     n=14
     timeframe_list = []
@@ -405,8 +407,6 @@ class TechnicalStrategy(Strategy):
             - On same historical data 
     """
     
-    from stocktrends import Renko
-
     n=120
     timeframe_list = []
     open_list = []
@@ -430,7 +430,6 @@ class TechnicalStrategy(Strategy):
       df['Low'] = pd.DataFrame(low_list)
       df['Close'] = pd.DataFrame(close_list)
       df['Volume'] = pd.DataFrame(volume_list)
-      print('df: \n', df)
       
       atr_df = df.copy()
       atr_df["H-L"] = atr_df["High"] - atr_df["Low"]
@@ -438,27 +437,48 @@ class TechnicalStrategy(Strategy):
       atr_df["L-PC"] = abs(atr_df["Low"] - atr_df["Close"].shift(1))
       atr_df["TR"] = atr_df[["H-L","H-PC","L-PC"]].max(axis=1, skipna=False)
       atr_df["ATR"] = atr_df["TR"].ewm(com=n, min_periods=n).mean()
-      print('atr_df["ATR"]: \n', atr_df["ATR"])
+      # print('atr_df["ATR"]: \n', atr_df["ATR"])
 
     except Exception as e:
       print("Error ATR-Renko :", e)
 
     try:
       ren_df = df.copy()
-      print('ren_df: \n', ren_df)
+      # print('ren_df: \n', ren_df)
       # ren_df.reset_index(inplace=True)
       ren_df.columns = ["date", "open", "high", "low", "close", "volume"]
-      print('ren_df.columns: ', ren_df.columns)
       
       df2 = Renko(ren_df)
-      print('df2: \n', df2)
       df2.brick_size = 3 * round(atr_df["ATR"].iloc[-2],0)
-      print('df2.brick_size: ', df2.brick_size)
       renko_df = df2.get_ohlc_data()
-      print('renko_df: \n', renko_df)
+      # print('renko_df: \n', renko_df)
       
     except Exception as e:
       print("Error in Renko", e)
+
+
+  def _disp_in(self):
+    """
+      Disparity Index (DI)
+    """
+
+    close_list = []
+    lookback = 14
+
+    for candle in self.candles:
+      close_list.append(candle.close)
+
+    try:
+      closes = pd.Series(close_list)
+      print('closes: ', closes)
+
+      ma = closes.rolling(lookback).mean().dropna()
+      print('ma: ', ma)
+      di = 100 * ((closes - ma) / ma).dropna()
+      print('di_______: ', di)
+
+    except Exception as e:
+      print("Error in DispIn:", e)
 
 
   def _rsi(self):
@@ -490,7 +510,7 @@ class TechnicalStrategy(Strategy):
       return rsi.iloc[-2]
 
     except Exception as e:
-      print("Error", e)
+      print("Error in RSI:", e)
       
 
   def _macd(self) -> Tuple[float, float]:
@@ -520,7 +540,7 @@ class TechnicalStrategy(Strategy):
       return macd_line.iloc[-2], macd_signal.iloc[-2]
       
     except Exception as e:
-      print("Error", e)
+      print("Error in MACD:", e)
 
 
   def _check_signal(self):
@@ -536,6 +556,7 @@ class TechnicalStrategy(Strategy):
     atr2, plus_di2, minus_di2, adx2 = self._adxatr()
     self._adxatrcom()
     self._renko()
+    self. _disp_in()
 
     print("RSI: ", rsi)
     print("MACDLine: ", macd_line, "MACDSignal: ", macd_signal)
