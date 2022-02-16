@@ -222,50 +222,24 @@ class TechnicalStrategy(Strategy):
 
     self._rsi_length = other_params['rsi_length']
 
-  def _candle_list(self):
-  
-    timeframe_list = []
-    open_list = []
-    high_list = []
-    low_list=[]
-    close_list = []
-    volume_list = [] 
-    try:
-      for candle in self.candles:
-        timeframe_list.append(candle.timestamp)
-        open_list.append(candle.open)
-        high_list.append(candle.high)
-        low_list.append(candle.low)
-        close_list.append(candle.close)
-        volume_list.append(candle.volume)
-
-      df = pd.DataFrame(timeframe_list, columns=["timeframe"])
-      df["Open"] = pd.DataFrame(open_list)
-      df["High"] = pd.DataFrame(high_list)
-      df["Low"] = pd.DataFrame(low_list)
-      df["Close"] = pd.DataFrame(close_list)
-      df["Volume"] = pd.DataFrame(volume_list)
-      # print("Candle Lists ---------DF: \n", df)
-
-      return df  
-    except Exception as e:
-      print("Error in Candle List: ", e)
-
-
 
   def _bollinger_band(self):
     """
       Bollinger Bands (BB)
     """
+    close_list = []
     bb_period = 20
     bb_multiplier = 2
 
-    try:
-      df = self._candle_list()
-      bbdf = df.copy()
+    for candle in self.candles:
+      close_list.append(candle.close)
 
-      ma = bbdf['Close'].rolling(bb_period).mean()
-      std = bbdf['Close'].rolling(bb_period).std()
+    try:
+      closes = pd.Series(close_list)
+
+      # print("Closes______________________", closes)
+      ma = closes.rolling(bb_period).mean()
+      std = closes.rolling(bb_period).std()
 
       upper_band = ma + bb_multiplier * std
       lower_band = ma - bb_multiplier * std
@@ -492,26 +466,30 @@ class TechnicalStrategy(Strategy):
       print("Error DF_R-ATR :", e)
 
     try:
+
       atr_df = newdf.copy()
       atr_df["H-L"] = atr_df["Hi"] - atr_df["Lo"]
       atr_df["H-PC"] = abs(atr_df["Hi"] - atr_df["Cl"].shift(1))
       atr_df["L-PC"] = abs(atr_df["Lo"] - atr_df["Cl"].shift(1))
       atr_df["TR"] = atr_df[["H-L","H-PC","L-PC"]].max(axis=1, skipna=False)
       atr_df["ATR"] = atr_df["TR"].ewm(com=n, min_periods=n).mean()
-      # print("atr_df :: \n", atr_df)
+
+      print("atr_df :: \n", atr_df)
 
     except Exception as e:
       print("Error ATR-Renko :", e)
 
     try:
       ren_df = df.copy()
-      # ren_df.reset_index(inplace=True)         #-- Currenty NO
+      print('ren_df: \n', ren_df)
+      # ren_df.reset_index(inplace=True)
       ren_df.columns = ["date", "open", "high", "low", "close", "volume"]
       
       df2 = Renko(ren_df)
       df2.brick_size = 3 * round(atr_df["ATR"].iloc[-2], 0)
+      print('df2.brick_size: ', df2.brick_size)
       renko_df = df2.get_ohlc_data()
-      # print('renko_df: \n', renko_df)
+      print('renko_df: \n', renko_df)
 
       return df2.brick_size, renko_df["uptrend"].iloc[-2]
 
@@ -562,78 +540,26 @@ class TechnicalStrategy(Strategy):
 
       diff = closes - closes.shift(1)
       abs_diff = abs(diff).dropna()
+      print('abs_diff: ', abs_diff)
 
       diff_smoothed = diff.ewm(span=long, adjust=False).mean().dropna()
+      print('diff_smoothed: ', diff_smoothed)
       diff_double_smoothed = diff_smoothed.ewm(span=short, adjust=False).mean().dropna()
+      print('diff_double_smoothed: ', diff_double_smoothed)
       abs_diff_smoothed = abs_diff.ewm(span=long, adjust=False).mean().dropna()
+      print('abs_diff_smoothed: ', abs_diff_smoothed)
       abs_diff_double_smoothed = abs_diff_smoothed.ewm(span=short, adjust=False).mean().dropna()
+      print('abs_diff_double_smoothed: ', abs_diff_double_smoothed)
 
       tsi = 100 * (diff_double_smoothed / abs_diff_double_smoothed).dropna()
-      # print('tsi: \n', tsi)
+      print('tsi: \n', tsi)
       tsi_signal = tsi.ewm(span=signal, adjust=False).mean()
-      # print('tsi_signal: \n', tsi_signal)
+      print('tsi_signal: \n', tsi_signal)
       
       return tsi.iloc[-2], tsi_signal.iloc[-2]
 
     except Exception as e:
       print("Error in TSI: ", e)
-
-
-  def _stoch(self):
-    """
-      Stochastic 
-          - n_high 
-          - n_low 
-          - %k (fast line)
-          - %d (slow line)
-    """
-    try:
-      df = self._candle_list()
-
-      stoch_df = df.copy()
-      k_period = 14
-      d_period = 3
-
-
-      stoch_df['n_high'] = stoch_df['High'].rolling(k_period).max()
-      stoch_df['n_low'] = stoch_df['Low'].rolling(k_period).min()
-
-      stoch_df['%K'] = 100 * ((stoch_df['Close'] - stoch_df['n_low']) / (stoch_df['n_high'] - stoch_df['n_low']))
-      stoch_df['%D'] = stoch_df['%K'].rolling(d_period).mean()
-
-      stoch_df = stoch_df.dropna()
-      print("stoch_df: \n", stoch_df)
-
-    except Exception as e:
-      print("Error in CCI:", e)
-    
-
-  def _cci(self):
-    """
-      Commodity Channel Index (CCI)
-          - Typical Price (TP)
-          - Moving Average (SMA)
-          - Mean Deviation (MAD)
-          - Lambert's constant (0.015)
-    """
-    try:
-      df  = self._candle_list()
-
-      cci_df = df.copy()
-      constant = 0.015
-      lookback = 14
-
-      cci_df['TP'] = (cci_df['High'] + cci_df['Low'] + cci_df['Close']) / 3
-      cci_df['SMA'] = cci_df['TP'].rolling(lookback).mean()
-      cci_df['MAD'] = cci_df['TP'].rolling(lookback).apply(lambda x : pd.Series(x).mad())
-      cci_df['CCI'] = (cci_df['TP'] - cci_df['SMA']) / (constant * cci_df['MAD'])
-
-      cci_df = cci_df.dropna()
-
-      print("CCI_df: \n", cci_df)
-
-    except Exception as e:
-      print("Error in CCI: ", e)
 
 
   def _rsi(self):
@@ -704,18 +630,15 @@ class TechnicalStrategy(Strategy):
        For long signal-> 1 || short signal -> -1 || no signal -> 0        
     """
 
-    rsi =  self._rsi()
-    disp_in = self. _disp_in()
-    tsi, tsi_signal = self._tsi()
     macd_line, macd_signal = self._macd()
-    brick_size, renko_uptrend = self._renko()
-    atr2, plus_di2, minus_di2, adx2 = self._adxatr()
-    atr, plus_di, minus_di, adx_smooth = self._adx()
+    rsi =  self._rsi()
     bollinger_up, bollinger_down = self._bollinger_band()
+    atr, plus_di, minus_di, adx_smooth = self._adx()
+    atr2, plus_di2, minus_di2, adx2 = self._adxatr()
+    disp_in = self. _disp_in()
+    brick_size, renko_uptrend = self._renko()
+    tsi, tsi_signal = self._tsi()
     self._adxatrcom()
-    self._stoch()
-    self._cci()
-
 
     print("RSI: ", rsi)
     print("MACDLine: ", macd_line, "MACDSignal: ", macd_signal)
