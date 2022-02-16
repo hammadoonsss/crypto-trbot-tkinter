@@ -1,13 +1,13 @@
-import logging
 import time
+import logging
+import numpy as np
+import pandas as pd
+
 from typing import *
 
-from threading import Timer
-
-import pandas as pd
-import numpy as np
-
 from models import *
+
+from threading import Timer
 
 from stocktrends import Renko
 
@@ -392,9 +392,8 @@ class TechnicalStrategy(Strategy):
       adxdf["-di"] = 100 * (adxdf["-dm"]/df["ATR"]).ewm(alpha=1/n, min_periods=n).mean()
       adxdf["ADX"] = 100* abs((adxdf["+di"] - adxdf["-di"])/(adxdf["+di"] + adxdf["-di"])).ewm(alpha=1/n, min_periods=n).mean()
 
-      # print('Dataframe:_________ \n', df)
-      # print('ADXDF:_________ \n', adxdf)
-      # print('adxdf["ADX"]: ', adxdf["ADX"].iloc[-2])
+      return adxdf["ADX"].iloc[-2]
+
     except Exception as e:
       print("Error ADXATR3:", e)
 
@@ -404,9 +403,9 @@ class TechnicalStrategy(Strategy):
       Renko Chart with ATR
             - pip install stocktrends
             - from stocktrends import Renko
-            - On same historical data 
+            - On Historical Data with different timeframe
     """
-    
+
     n=120
     timeframe_list = []
     open_list = []
@@ -423,6 +422,27 @@ class TechnicalStrategy(Strategy):
       close_list.append(candle.close)
       volume_list.append(candle.volume)
 
+
+    hist_data = self.client.get_historical_candles(self.contract, "1h")
+    # print('hist_data:__ ', hist_data)
+
+    tf_list = []
+    op_list = []
+    hi_list = []
+    lo_list = []
+    cl_list = []
+    vol_list = []
+
+    for candle in hist_data:
+      tf_list.append(candle.timestamp)
+      op_list.append(candle.open)
+      hi_list.append(candle.high)
+      lo_list.append(candle.low)
+      cl_list.append(candle.close)
+      vol_list.append(candle.volume)
+    
+    # print("tf_list: ", tf_list)
+
     try:
       df = pd.DataFrame(timeframe_list, columns=['timeframe'])
       df['Open'] = pd.DataFrame(open_list)
@@ -430,29 +450,49 @@ class TechnicalStrategy(Strategy):
       df['Low'] = pd.DataFrame(low_list)
       df['Close'] = pd.DataFrame(close_list)
       df['Volume'] = pd.DataFrame(volume_list)
+
+      # print('dfatrrenko :: \n', df)
+
+      newdf = pd.DataFrame(tf_list, columns=['TF'])
+      newdf['Op'] = pd.DataFrame(open_list)
+      newdf['Hi'] = pd.DataFrame(high_list)
+      newdf['Lo'] = pd.DataFrame(low_list)
+      newdf['Cl'] = pd.DataFrame(close_list)
+      newdf['Vol'] = pd.DataFrame(volume_list)
       
-      atr_df = df.copy()
-      atr_df["H-L"] = atr_df["High"] - atr_df["Low"]
-      atr_df["H-PC"] = abs(atr_df["High"] - atr_df["Close"].shift(1))
-      atr_df["L-PC"] = abs(atr_df["Low"] - atr_df["Close"].shift(1))
+      # print('newdf :: \n', newdf)
+
+    except Exception as e:
+      print("Error DF_R-ATR :", e)
+
+    try:
+
+      atr_df = newdf.copy()
+      atr_df["H-L"] = atr_df["Hi"] - atr_df["Lo"]
+      atr_df["H-PC"] = abs(atr_df["Hi"] - atr_df["Cl"].shift(1))
+      atr_df["L-PC"] = abs(atr_df["Lo"] - atr_df["Cl"].shift(1))
       atr_df["TR"] = atr_df[["H-L","H-PC","L-PC"]].max(axis=1, skipna=False)
       atr_df["ATR"] = atr_df["TR"].ewm(com=n, min_periods=n).mean()
-      # print('atr_df["ATR"]: \n', atr_df["ATR"])
+
+      print("atr_df :: \n", atr_df)
 
     except Exception as e:
       print("Error ATR-Renko :", e)
 
     try:
       ren_df = df.copy()
-      # print('ren_df: \n', ren_df)
+      print('ren_df: \n', ren_df)
       # ren_df.reset_index(inplace=True)
       ren_df.columns = ["date", "open", "high", "low", "close", "volume"]
       
       df2 = Renko(ren_df)
-      df2.brick_size = 3 * round(atr_df["ATR"].iloc[-2],0)
+      df2.brick_size = 3 * round(atr_df["ATR"].iloc[-2], 0)
+      print('df2.brick_size: ', df2.brick_size)
       renko_df = df2.get_ohlc_data()
-      # print('renko_df: \n', renko_df)
-      
+      print('renko_df: \n', renko_df)
+
+      return df2.brick_size, renko_df["uptrend"].iloc[-2]
+
     except Exception as e:
       print("Error in Renko", e)
 
@@ -470,15 +510,56 @@ class TechnicalStrategy(Strategy):
 
     try:
       closes = pd.Series(close_list)
-      print('closes: ', closes)
 
       ma = closes.rolling(lookback).mean().dropna()
-      print('ma: ', ma)
       di = 100 * ((closes - ma) / ma).dropna()
-      print('di_______: ', di)
+
+      return di.iloc[-2]
+      # print('di_______: ', di)
 
     except Exception as e:
       print("Error in DispIn:", e)
+
+  def _tsi(self):
+    """
+      True Strenth Index (TSI)
+          - lookback period for the long EMA - 25
+          - lookback period for the short EMA - 13
+          - lookback period for the signal line EMA - (within 7 to 12 )
+    """
+    close_list = []
+    long = 25
+    short = 7
+    signal = 12
+
+    for candle in self.candles:
+      close_list.append(candle.close)
+
+    try:
+      closes = pd.Series(close_list)
+
+      diff = closes - closes.shift(1)
+      abs_diff = abs(diff).dropna()
+      print('abs_diff: ', abs_diff)
+
+      diff_smoothed = diff.ewm(span=long, adjust=False).mean().dropna()
+      print('diff_smoothed: ', diff_smoothed)
+      diff_double_smoothed = diff_smoothed.ewm(span=short, adjust=False).mean().dropna()
+      print('diff_double_smoothed: ', diff_double_smoothed)
+      abs_diff_smoothed = abs_diff.ewm(span=long, adjust=False).mean().dropna()
+      print('abs_diff_smoothed: ', abs_diff_smoothed)
+      abs_diff_double_smoothed = abs_diff_smoothed.ewm(span=short, adjust=False).mean().dropna()
+      print('abs_diff_double_smoothed: ', abs_diff_double_smoothed)
+
+      tsi = 100 * (diff_double_smoothed / abs_diff_double_smoothed).dropna()
+      print('tsi: \n', tsi)
+      tsi_signal = tsi.ewm(span=signal, adjust=False).mean()
+      print('tsi_signal: \n', tsi_signal)
+      
+      return tsi.iloc[-2], tsi_signal.iloc[-2]
+
+    except Exception as e:
+      print("Error in TSI: ", e)
 
 
   def _rsi(self):
@@ -554,15 +635,19 @@ class TechnicalStrategy(Strategy):
     bollinger_up, bollinger_down = self._bollinger_band()
     atr, plus_di, minus_di, adx_smooth = self._adx()
     atr2, plus_di2, minus_di2, adx2 = self._adxatr()
+    disp_in = self. _disp_in()
+    brick_size, renko_uptrend = self._renko()
+    tsi, tsi_signal = self._tsi()
     self._adxatrcom()
-    self._renko()
-    self. _disp_in()
 
     print("RSI: ", rsi)
     print("MACDLine: ", macd_line, "MACDSignal: ", macd_signal)
     print( "BB_up: ", bollinger_up, "BB_down:", bollinger_down)
     print("ATR: ", atr, "Plus_DI: ",plus_di, "Minus_DI: ", minus_di, "ADX_Smooth: ", adx_smooth)
     print("ATR2:__", atr2, "Plus_DI2: ",plus_di2, "Minus_DI2: ", minus_di2, "ADX2:", adx2 )
+    print('Disp_In: ', disp_in)
+    print("Renko_Brick: ", brick_size, "Renko_Uptrend: ", renko_uptrend)
+    print("TSI: ", tsi, "TSI_Signal: ", tsi_signal)
 
     if rsi < 30 and macd_line > macd_signal:
       return 1
