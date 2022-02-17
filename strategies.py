@@ -223,6 +223,10 @@ class TechnicalStrategy(Strategy):
     self._rsi_length = other_params['rsi_length']
 
   def _candle_list(self):
+    """
+      Candle Lists of Hisorical Candle:
+           - Timeframe, Open, High, Low, Close, Volume
+    """
   
     timeframe_list = []
     open_list = []
@@ -252,10 +256,12 @@ class TechnicalStrategy(Strategy):
       print("Error in Candle List: ", e)
 
 
-
   def _bollinger_band(self):
     """
       Bollinger Bands (BB)
+          - Moving Average (MA)
+          - Standard Deviation (STD)
+          - Upper Band, Lower Band
     """
     bb_period = 20
     bb_multiplier = 2
@@ -522,25 +528,25 @@ class TechnicalStrategy(Strategy):
   def _disp_in(self):
     """
       Disparity Index (DI)
+        - lookback period - 14
+        - Moving Average (MA)
     """
-
-    close_list = []
     lookback = 14
 
-    for candle in self.candles:
-      close_list.append(candle.close)
-
     try:
-      closes = pd.Series(close_list)
+      df = self._candle_list()
+      disp_df = df.copy()
 
-      ma = closes.rolling(lookback).mean().dropna()
-      di = 100 * ((closes - ma) / ma).dropna()
+      disp_df['MA'] = disp_df['Close'].rolling(lookback).mean()
+      disp_df['DI'] = 100 * ((disp_df['Close'] - disp_df['MA']) / disp_df['MA'])
 
-      return di.iloc[-2]
-      # print('di_______: ', di)
+      disp_df = disp_df.dropna()
+      # print('disp_df: \n', disp_df)
+      return disp_df['DI'].iloc[-2]
 
     except Exception as e:
       print("Error in DispIn:", e)
+
 
   def _tsi(self):
     """
@@ -549,31 +555,29 @@ class TechnicalStrategy(Strategy):
           - lookback period for the short EMA - 13
           - lookback period for the signal line EMA - (within 7 to 12 )
     """
-    close_list = []
     long = 25
     short = 7
     signal = 12
 
-    for candle in self.candles:
-      close_list.append(candle.close)
-
     try:
-      closes = pd.Series(close_list)
+      df = self._candle_list()
+      tsi_df = df.copy()
 
-      diff = closes - closes.shift(1)
-      abs_diff = abs(diff).dropna()
+      tsi_df['diff'] = tsi_df['Close'] - tsi_df['Close'].shift(1)
+      tsi_df['abs_diff'] = abs(tsi_df['diff'])
 
-      diff_smoothed = diff.ewm(span=long, adjust=False).mean().dropna()
-      diff_double_smoothed = diff_smoothed.ewm(span=short, adjust=False).mean().dropna()
-      abs_diff_smoothed = abs_diff.ewm(span=long, adjust=False).mean().dropna()
-      abs_diff_double_smoothed = abs_diff_smoothed.ewm(span=short, adjust=False).mean().dropna()
+      tsi_df['diff_smoothed'] = tsi_df['diff'].ewm(span=long, adjust=False).mean()
+      tsi_df['diff_double_smoothed'] = tsi_df['diff_smoothed'].ewm(span=short, adjust=False).mean()
+      tsi_df['abs_diff_smoothed'] = tsi_df['abs_diff'].ewm(span=long, adjust=False).mean()
+      tsi_df['abs_diff_double_smoothed'] = tsi_df['abs_diff_smoothed'].ewm(span=short, adjust=False).mean()
 
-      tsi = 100 * (diff_double_smoothed / abs_diff_double_smoothed).dropna()
-      # print('tsi: \n', tsi)
-      tsi_signal = tsi.ewm(span=signal, adjust=False).mean()
-      # print('tsi_signal: \n', tsi_signal)
+      tsi_df['tsi'] = 100 * (tsi_df['diff_double_smoothed'] / tsi_df['abs_diff_double_smoothed'])
+      tsi_df['tsi_signal'] = tsi_df['tsi'].ewm(span=signal, adjust=False).mean()
+
+      tsi_df = tsi_df.dropna()
+      # print("tsi_df: \n", tsi_df)
       
-      return tsi.iloc[-2], tsi_signal.iloc[-2]
+      return tsi_df['tsi'].iloc[-2], tsi_df['tsi_signal'].iloc[-2]
 
     except Exception as e:
       print("Error in TSI: ", e)
@@ -587,13 +591,12 @@ class TechnicalStrategy(Strategy):
           - %k (fast line)
           - %d (slow line)
     """
+    k_period = 14
+    d_period = 3
+
     try:
       df = self._candle_list()
-
       stoch_df = df.copy()
-      k_period = 14
-      d_period = 3
-
 
       stoch_df['n_high'] = stoch_df['High'].rolling(k_period).max()
       stoch_df['n_low'] = stoch_df['Low'].rolling(k_period).min()
@@ -602,7 +605,7 @@ class TechnicalStrategy(Strategy):
       stoch_df['%D'] = stoch_df['%K'].rolling(d_period).mean()
 
       stoch_df = stoch_df.dropna()
-      print("stoch_df: \n", stoch_df)
+      # print("stoch_df: \n", stoch_df)
 
     except Exception as e:
       print("Error in CCI:", e)
@@ -616,12 +619,12 @@ class TechnicalStrategy(Strategy):
           - Mean Deviation (MAD)
           - Lambert's constant (0.015)
     """
+    constant = 0.015
+    lookback = 14
+
     try:
       df  = self._candle_list()
-
       cci_df = df.copy()
-      constant = 0.015
-      lookback = 14
 
       cci_df['TP'] = (cci_df['High'] + cci_df['Low'] + cci_df['Close']) / 3
       cci_df['SMA'] = cci_df['TP'].rolling(lookback).mean()
@@ -629,8 +632,7 @@ class TechnicalStrategy(Strategy):
       cci_df['CCI'] = (cci_df['TP'] - cci_df['SMA']) / (constant * cci_df['MAD'])
 
       cci_df = cci_df.dropna()
-
-      print("CCI_df: \n", cci_df)
+      # print("CCI_df: \n", cci_df)
 
     except Exception as e:
       print("Error in CCI: ", e)
