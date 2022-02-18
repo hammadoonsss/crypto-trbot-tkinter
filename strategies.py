@@ -637,6 +637,28 @@ class TechnicalStrategy(Strategy):
     except Exception as e:
       print("Error in CCI: ", e)
 
+  def _wir(self):
+    """
+      Williams %R (WIR)
+        - lookback Highest High (High_H)
+        - lookback Lowest Low (Low_L)
+    """
+    lookback=14
+
+    try:
+      df = self._candle_list()
+      wir_df = df.copy()
+
+      wir_df['High_H'] = wir_df['High'].rolling(lookback).max()
+      wir_df['Low_L'] = wir_df['Low'].rolling(lookback).min()
+      wir_df['WIR'] = -100 * ((wir_df['High_H'] - wir_df['Close'])  / (wir_df['High_H'] - wir_df['Low_L']))
+
+      wir_df = wir_df.dropna()
+      print('wir_df: \n', wir_df)
+      
+    except Exception as e:
+      print("Error in WIR: ", e)
+
 
   def _rsi(self):
     """
@@ -717,6 +739,7 @@ class TechnicalStrategy(Strategy):
     self._adxatrcom()
     self._stoch()
     self._cci()
+    self._wir()
 
 
     print("RSI: ", rsi)
