@@ -660,6 +660,50 @@ class TechnicalStrategy(Strategy):
       print("Error in WIR: ", e)
 
 
+  def _ichimoku(self):
+    """
+      Ichimoku Cloud (IC)
+        - Tenkan-Sen/Conversion Line      -  Period-20/9
+        - Kijun-Sen/Base Line             -  Period-60/26
+        - Senkou Sen A/Leading Span A     -  Period-30/26
+        - Senkou Sen B/Leading Span B     -  Period-120/52
+        - Chikou/Lagging Span             -  Period-30/26
+    """
+    cl_period = 20
+    bl_period = 60
+    lead_b_period = 120
+    lag_period = 30
+
+    try:
+      df = self._candle_list()
+      ichi_df = df.copy()
+
+      high_20 = ichi_df['High'].rolling(cl_period).max()
+      low_20 = ichi_df['Low'].rolling(cl_period).min()
+
+      ichi_df['Conversion_Line'] = (high_20 + low_20) / 2
+
+      high_60 = ichi_df['High'].rolling(bl_period).max()
+      low_60 = ichi_df['Low'].rolling(bl_period).min()
+
+      ichi_df['Base_Line'] = (high_60 + low_60) / 2
+
+      ichi_df['Lead_span_A'] = ((ichi_df['Conversion_Line'] + ichi_df['Base_Line']) / 2).shift(lag_period)
+
+      high_120 = ichi_df['High'].rolling(lead_b_period).max()
+      low_120 = ichi_df['Low'].rolling(lead_b_period).min()
+
+      ichi_df['Lead_span_B'] = ((high_120 + low_120) / 2).shift(lead_b_period)
+
+      ichi_df['Lagging_span'] = ichi_df['Close'].shift(-lag_period)
+
+      ichi_df = ichi_df.dropna()
+      print('ichi_df: \n', ichi_df)
+
+    except Exception as e:
+      print("Error in Ichimoku: ", e)
+
+
   def _rsi(self):
     """
       Relative Strength Index (RSI) 
@@ -740,6 +784,7 @@ class TechnicalStrategy(Strategy):
     self._stoch()
     self._cci()
     self._wir()
+    self._ichimoku()
 
 
     print("RSI: ", rsi)
