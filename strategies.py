@@ -703,6 +703,31 @@ class TechnicalStrategy(Strategy):
     except Exception as e:
       print("Error in Ichimoku: ", e)
 
+  def _psar(self):
+    """
+      Parabolic SAR (PSAR)
+    """
+    # import TA-Lib
+    import talib
+    
+    acceleration = 0.02
+    maximum = 0.2
+
+    try:
+      df = self._candle_list() 
+      psar = df.copy()
+      
+      high = psar['High']
+      low = psar['Low']
+
+      psar['SAR'] = talib.SAR(high, low, acceleration=acceleration, maximum=maximum)
+
+      psar = psar.dropna()
+      print('psar: \n', psar)
+
+    except Exception as e:
+      print("Error in PSAR: ", e)
+  
 
   def _rsi(self):
     """
@@ -785,6 +810,7 @@ class TechnicalStrategy(Strategy):
     self._cci()
     self._wir()
     self._ichimoku()
+    self._psar()
 
 
     print("RSI: ", rsi)
