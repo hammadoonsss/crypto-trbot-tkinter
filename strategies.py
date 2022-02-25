@@ -2,6 +2,7 @@ import time
 import logging
 import numpy as np
 import pandas as pd
+import tkinter as tk
 
 from matplotlib import pyplot as plt
 from matplotlib import style
@@ -226,6 +227,8 @@ class TechnicalStrategy(Strategy):
 
     self._rsi_length = other_params['rsi_length']
 
+    self.root= tk.Tk()
+
   def _candle_list(self):
     """
       Candle Lists of Hisorical Candle:
@@ -286,6 +289,15 @@ class TechnicalStrategy(Strategy):
       bbdf['Lower_band'] = ma - bb_multiplier * std
 
       bbdf = bbdf.dropna()
+
+      figure = plt.Figure(figsize=(8,8), dpi=200)
+      ax = figure.add_subplot(111)
+      chart_type = FigureCanvasTkAgg(figure, self.root)
+      chart_type.get_tk_widget().pack()
+      df = bbdf[['Upper_band','Lower_band']].groupby(bbdf['DateTime']).sum()
+      df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+      ax.set_title('Bollinger_Bands')
+
       return bbdf
       # print("bbdf: \n", bbdf)
 
@@ -784,6 +796,17 @@ class TechnicalStrategy(Strategy):
       rsi_df = rsi_df.dropna()
       # print('rsi_df: \n', rsi_df)
 
+      try:
+        figure = plt.Figure(figsize=(8,9), dpi=100)
+        ax = figure.add_subplot(111)
+        chart_type = FigureCanvasTkAgg(figure, self.root)
+        chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+        df = rsi_df[['RSI']].groupby(rsi_df['DateTime']).sum()
+        df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+        ax.set_title('RSI')
+      except Exception as e:
+        print("Error RSI Graph: ", e)
+
       return rsi_df['RSI'].iloc[-2]
 
     except Exception as e:
@@ -800,21 +823,32 @@ class TechnicalStrategy(Strategy):
        4) Fast EMA on the result of 3)
     """
 
-    close_list =  []
-    
-    for candle in self.candles:
-      close_list.append(candle.close)
-    
     try:
-      closes = pd.Series(close_list)
 
-      ema_fast = closes.ewm(span=self._ema_fast).mean() # ewm() -  Exponential Weighted functions
-      ema_slow = closes.ewm(span=self._ema_slow).mean()
+      df = self._candle_list()
+      macd_df = df.copy()
 
-      macd_line =  ema_fast - ema_slow      # macd of last finished candle
-      macd_signal = macd_line.ewm(span=self._ema_signal).mean()
+      ema_fast = macd_df['Close'].ewm(span=self._ema_fast).mean() # ewm() -  Exponential Weighted functions
+      ema_slow = macd_df['Close'].ewm(span=self._ema_slow).mean()
 
-      return macd_line.iloc[-2], macd_signal.iloc[-2]
+      macd_df['MACD_Line'] =  ema_fast - ema_slow      # macd of last finished candle
+      macd_df['MACD_Signal'] = macd_df['MACD_Line'].ewm(span=self._ema_signal).mean()
+
+      macd_df = macd_df.dropna()
+      # print('macd_df: \n', macd_df)
+
+      try:
+        figure = plt.Figure(figsize=(8,9), dpi=100)
+        ax = figure.add_subplot(111)
+        chart_type = FigureCanvasTkAgg(figure, self.root)
+        chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+        df = macd_df[['MACD_Line','MACD_Signal']].groupby(macd_df['DateTime']).sum()
+        df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+        ax.set_title('MACD')
+      except Exception as e:
+        print("Error MACD Graph: ", e)
+
+      return macd_df['MACD_Line'].iloc[-2], macd_df['MACD_Signal'].iloc[-2]
       
     except Exception as e:
       print("Error in MACD:", e)
@@ -833,7 +867,7 @@ class TechnicalStrategy(Strategy):
     # self._renko()
     # self._adxatr()
     # self._adx()
-    bbdf = self._bollinger_band()
+    # bbdf = self._bollinger_band()
     # self._adxatrcom()
     # self._stoch()
     # self._cci()
@@ -841,17 +875,6 @@ class TechnicalStrategy(Strategy):
     # self._ichimoku()
     # self._psar()
 
-    import tkinter as tk
-    root= tk.Tk()
-    
-    figure = plt.Figure(figsize=(6,5), dpi=100)
-    ax = figure.add_subplot(111)
-    chart_type = FigureCanvasTkAgg(figure, root)
-    chart_type.get_tk_widget().pack()
-    df = bbdf[['Upper_band','Lower_band']]
-    df.plot(kind='line', legend=True, ax=ax)
-    ax.set_title('B_Bands')
-    
 
     if rsi < 30 and macd_line > macd_signal:
       return 1
