@@ -3,6 +3,10 @@ import logging
 import numpy as np
 import pandas as pd
 
+from matplotlib import pyplot as plt
+from matplotlib import style
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 from typing import *
 
 from models import *
@@ -234,6 +238,8 @@ class TechnicalStrategy(Strategy):
     low_list=[]
     close_list = []
     volume_list = [] 
+    datetime_list = []
+
     try:
       for candle in self.candles:
         timeframe_list.append(candle.timestamp)
@@ -242,6 +248,8 @@ class TechnicalStrategy(Strategy):
         low_list.append(candle.low)
         close_list.append(candle.close)
         volume_list.append(candle.volume)
+        date_time = datetime.datetime.fromtimestamp(candle.timestamp / 1000).strftime("%H:%M")
+        datetime_list.append(date_time)
 
       df = pd.DataFrame(timeframe_list, columns=["timeframe"])
       df["Open"] = pd.DataFrame(open_list)
@@ -249,6 +257,7 @@ class TechnicalStrategy(Strategy):
       df["Low"] = pd.DataFrame(low_list)
       df["Close"] = pd.DataFrame(close_list)
       df["Volume"] = pd.DataFrame(volume_list)
+      df["DateTime"] = pd.DataFrame(datetime_list)
       # print("Candle Lists ---------DF: \n", df)
 
       return df  
@@ -273,10 +282,26 @@ class TechnicalStrategy(Strategy):
       ma = bbdf['Close'].rolling(bb_period).mean()
       std = bbdf['Close'].rolling(bb_period).std()
 
-      upper_band = ma + bb_multiplier * std
-      lower_band = ma - bb_multiplier * std
+      bbdf['Upper_band'] = ma + bb_multiplier * std
+      bbdf['Lower_band'] = ma - bb_multiplier * std
 
-      return upper_band.iloc[-2], lower_band.iloc[-2] 
+      bbdf = bbdf.dropna()
+      return bbdf
+      # print("bbdf: \n", bbdf)
+
+      # plt.figure(figsize=(2,3), dpi=200)
+      # plt.plot(bbdf['timeframe'], bbdf['Upper_band'], label="Upperband")
+      # plt.plot(bbdf['timeframe'], bbdf['Lower_band'], label="Lowerband")
+      # plt.title("Bollinger Bands", fontdict={'fontsize': 20})
+      # plt.xlabel("Timeframe")
+      # plt.ylabel("Data")
+      # plt.legend()
+      # plt.grid()
+      # plt.show()
+
+      # bbdf[['Upper_band', 'Lower_band']].plot(figsize=(10,5))
+      # plt.grid()
+      # plt.show()
       
     except Exception as e:
       print("Error in BB: ", e)
@@ -654,7 +679,7 @@ class TechnicalStrategy(Strategy):
       wir_df['WIR'] = -100 * ((wir_df['High_H'] - wir_df['Close'])  / (wir_df['High_H'] - wir_df['Low_L']))
 
       wir_df = wir_df.dropna()
-      print('wir_df: \n', wir_df)
+      # print('wir_df: \n', wir_df)
       
     except Exception as e:
       print("Error in WIR: ", e)
@@ -698,7 +723,7 @@ class TechnicalStrategy(Strategy):
       ichi_df['Lagging_span'] = ichi_df['Close'].shift(-lag_period)
 
       ichi_df = ichi_df.dropna()
-      print('ichi_df: \n', ichi_df)
+      # print('ichi_df: \n', ichi_df)
 
     except Exception as e:
       print("Error in Ichimoku: ", e)
@@ -723,7 +748,11 @@ class TechnicalStrategy(Strategy):
       psar['SAR'] = talib.SAR(high, low, acceleration=acceleration, maximum=maximum)
 
       psar = psar.dropna()
-      print('psar: \n', psar)
+      # print('psar: \n', psar)
+      
+      # psar[['Close', 'SAR']].plot(figsize=(10,5))
+      # plt.grid()
+      # plt.show()
 
     except Exception as e:
       print("Error in PSAR: ", e)
@@ -732,30 +761,30 @@ class TechnicalStrategy(Strategy):
   def _rsi(self):
     """
       Relative Strength Index (RSI) 
+        - delta, up, down
+        - avg_gain, avg_loss, rs
     """
-    close_list = []
-    
-    for candle in self.candles:
-      close_list.append(candle.close)
 
     try:
-      closes = pd.Series(close_list)
+      df = self._candle_list()
+      rsi_df = df.copy()
 
-      delta = closes.diff().dropna()
+      delta = rsi_df['Close'].diff().dropna()
       up, down = delta.copy(), delta.copy()
 
       up[up < 0] = 0
       down[down > 0] = 0
 
-      avg_gain = up.ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean() # com - center of mass
+      avg_gain = up.ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean()
       avg_loss = down.abs().ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean()
 
       rs = avg_gain/avg_loss
 
-      rsi = 100 - ( 100 / ( 1 + rs ) )
-      rsi.round(2)
+      rsi_df['RSI'] = (100 - ( 100 / ( 1 + rs ))).round(2)
+      rsi_df = rsi_df.dropna()
+      # print('rsi_df: \n', rsi_df)
 
-      return rsi.iloc[-2]
+      return rsi_df['RSI'].iloc[-2]
 
     except Exception as e:
       print("Error in RSI:", e)
@@ -797,30 +826,32 @@ class TechnicalStrategy(Strategy):
        For long signal-> 1 || short signal -> -1 || no signal -> 0        
     """
 
-    rsi =  self._rsi()
-    disp_in = self. _disp_in()
-    tsi, tsi_signal = self._tsi()
+    rsi = self._rsi()
+    # self. _disp_in()
+    # self._tsi()
     macd_line, macd_signal = self._macd()
-    brick_size, renko_uptrend = self._renko()
-    atr2, plus_di2, minus_di2, adx2 = self._adxatr()
-    atr, plus_di, minus_di, adx_smooth = self._adx()
-    bollinger_up, bollinger_down = self._bollinger_band()
-    self._adxatrcom()
-    self._stoch()
-    self._cci()
-    self._wir()
-    self._ichimoku()
-    self._psar()
+    # self._renko()
+    # self._adxatr()
+    # self._adx()
+    bbdf = self._bollinger_band()
+    # self._adxatrcom()
+    # self._stoch()
+    # self._cci()
+    # self._wir()
+    # self._ichimoku()
+    # self._psar()
 
-
-    print("RSI: ", rsi)
-    print("MACDLine: ", macd_line, "MACDSignal: ", macd_signal)
-    print( "BB_up: ", bollinger_up, "BB_down:", bollinger_down)
-    print("ATR: ", atr, "Plus_DI: ",plus_di, "Minus_DI: ", minus_di, "ADX_Smooth: ", adx_smooth)
-    print("ATR2:__", atr2, "Plus_DI2: ",plus_di2, "Minus_DI2: ", minus_di2, "ADX2:", adx2 )
-    print('Disp_In: ', disp_in)
-    print("Renko_Brick: ", brick_size, "Renko_Uptrend: ", renko_uptrend)
-    print("TSI: ", tsi, "TSI_Signal: ", tsi_signal)
+    import tkinter as tk
+    root= tk.Tk()
+    
+    figure = plt.Figure(figsize=(6,5), dpi=100)
+    ax = figure.add_subplot(111)
+    chart_type = FigureCanvasTkAgg(figure, root)
+    chart_type.get_tk_widget().pack()
+    df = bbdf[['Upper_band','Lower_band']]
+    df.plot(kind='line', legend=True, ax=ax)
+    ax.set_title('B_Bands')
+    
 
     if rsi < 30 and macd_line > macd_signal:
       return 1

@@ -38,4 +38,33 @@ for ticker in ohlcv_data:
     ohlcv_data[ticker]["RSI"] = RSI(ohlcv_data[ticker])
     
 """
+"""
+      def _rsi(self):
     
+    # Relative Strength Index (RSI) 
+    
+    close_list = []
+    
+    for candle in self.candles:
+      close_list.append(candle.close)
+
+    try:
+
+      closes = pd.Series(close_list)
+      delta = closes.diff().dropna()
+      up, down = delta.copy(), delta.copy()
+      up[up < 0] = 0
+      down[down > 0] = 0
+
+      avg_gain = up.ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean() # com - center of mass
+      avg_loss = down.abs().ewm(com=(self._rsi_length - 1), min_periods=self._rsi_length).mean()
+
+      rs = avg_gain/avg_loss
+      rsi = 100 - ( 100 / ( 1 + rs ) )
+      rsi.round(2)
+
+      return rsi.iloc[-2]
+
+    except Exception as e:
+      print("Error in RSI:", e)
+"""

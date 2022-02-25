@@ -1,12 +1,39 @@
 """
   Parabolic SAR 
 """
+
+"""
+def _psar(self):
+
+    # Parabolic SAR (PSAR)
+
+    # import TA-Lib
+    import talib
+    
+    acceleration = 0.02
+    maximum = 0.2
+
+    try:
+      df = self._candle_list() 
+      psar = df.copy()
+      
+      high = psar['High']
+      low = psar['Low']
+
+      psar['SAR'] = talib.SAR(high, low, acceleration=acceleration, maximum=maximum)
+
+      psar = psar.dropna()
+      # print('psar: \n', psar)
+      
+      # psar[['Close', 'SAR']].plot(figsize=(10,5))
+      # plt.grid()
+      # plt.show()
+
+    except Exception as e:
+      print("Error in PSAR: ", e)
 """
 
 """
-
-"""
-
 def psar(barsdata, iaf = 0.02, maxaf = 0.2):
     length = len(barsdata)
     dates = list(barsdata['Date'])
@@ -63,5 +90,4 @@ def psar(barsdata, iaf = 0.02, maxaf = 0.2):
         else:
             psarbear[i] = psar[i]
     return {"dates":dates, "high":high, "low":low, "close":close, "psar":psar, "psarbear":psarbear, "psarbull":psarbull}
-
 """
