@@ -229,57 +229,44 @@ class TechnicalStrategy(Strategy):
 
     self.root= tk.Tk()
 
-  def _candle_list(self):
-    """
-      Candle Lists of Hisorical Candle:
-           - Timeframe, Open, High, Low, Close, Volume
-    """
-  
-    timeframe_list = []
-    open_list = []
-    high_list = []
-    low_list=[]
-    close_list = []
-    volume_list = [] 
-    datetime_list = []
 
+  def _candle_dict(self):
+    """
+      Candle Dictionary of Historical Candle
+          -- Timeframe, Open, High, Low, Close, Volume, DateTime
+    """
     try:
+      main_dict = {
+        'timeframe': [], 'Open': [], 'High': [], 'Low': [], 'Close': [], 'Volume' : [], 'DateTime': []
+      }
+
       for candle in self.candles:
-        timeframe_list.append(candle.timestamp)
-        open_list.append(candle.open)
-        high_list.append(candle.high)
-        low_list.append(candle.low)
-        close_list.append(candle.close)
-        volume_list.append(candle.volume)
-        date_time = datetime.datetime.fromtimestamp(candle.timestamp / 1000).strftime("%H:%M")
-        datetime_list.append(date_time)
+          main_dict['timeframe'].append(candle.timestamp)
+          main_dict['Open'].append(candle.open)
+          main_dict['High'].append(candle.high)
+          main_dict['Low'].append(candle.low)
+          main_dict['Close'].append(candle.close)
+          main_dict['Volume'].append(candle.volume)
+          date_time = datetime.datetime.fromtimestamp(candle.timestamp / 1000).strftime("%H:%M")
+          main_dict['DateTime'].append(date_time)
 
-      df = pd.DataFrame(timeframe_list, columns=["timeframe"])
-      df["Open"] = pd.DataFrame(open_list)
-      df["High"] = pd.DataFrame(high_list)
-      df["Low"] = pd.DataFrame(low_list)
-      df["Close"] = pd.DataFrame(close_list)
-      df["Volume"] = pd.DataFrame(volume_list)
-      df["DateTime"] = pd.DataFrame(datetime_list)
-      # print("Candle Lists ---------DF: \n", df)
+      candle_df = pd.DataFrame.from_dict(main_dict)
+      # print('Candle Dict df: \n', candle_df)
+      candle_df = candle_df.dropna()
+      return candle_df
 
-      return df  
     except Exception as e:
-      print("Error in Candle List: ", e)
+      print("Error in Candle Dictionary: ", e)
 
 
-  def _bollinger_band(self):
+  def _bollinger_band(self, bb_period=20, bb_multiplier=2):
     """
       Bollinger Bands (BB)
-          - Moving Average (MA)
-          - Standard Deviation (STD)
+          - Moving Average (MA), Standard Deviation (STD)
           - Upper Band, Lower Band
     """
-    bb_period = 20
-    bb_multiplier = 2
-
     try:
-      df = self._candle_list()
+      df = self._candle_dict()
       bbdf = df.copy()
 
       ma = bbdf['Close'].rolling(bb_period).mean()
@@ -289,182 +276,73 @@ class TechnicalStrategy(Strategy):
       bbdf['Lower_band'] = ma - bb_multiplier * std
 
       bbdf = bbdf.dropna()
+      # print('bbdf____: \n', bbdf)
 
-      figure = plt.Figure(figsize=(8,8), dpi=200)
-      ax = figure.add_subplot(111)
-      chart_type = FigureCanvasTkAgg(figure, self.root)
-      chart_type.get_tk_widget().pack()
-      df = bbdf[['Upper_band','Lower_band']].groupby(bbdf['DateTime']).sum()
-      df.plot(kind='line', legend=True, ax=ax, fontsize=10)
-      ax.set_title('Bollinger_Bands')
+      # figure = plt.Figure(figsize=(8,8), dpi=200)
+      # ax = figure.add_subplot(111)
+      # chart_type = FigureCanvasTkAgg(figure, self.root)
+      # chart_type.get_tk_widget().pack()
+      # df = bbdf[['Upper_band','Lower_band']].groupby(bbdf['DateTime']).sum()
+      # df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+      # ax.set_title('Bollinger_Bands')
 
       return bbdf
-      # print("bbdf: \n", bbdf)
 
-      # plt.figure(figsize=(2,3), dpi=200)
-      # plt.plot(bbdf['timeframe'], bbdf['Upper_band'], label="Upperband")
-      # plt.plot(bbdf['timeframe'], bbdf['Lower_band'], label="Lowerband")
-      # plt.title("Bollinger Bands", fontdict={'fontsize': 20})
-      # plt.xlabel("Timeframe")
-      # plt.ylabel("Data")
-      # plt.legend()
-      # plt.grid()
-      # plt.show()
-
-      # bbdf[['Upper_band', 'Lower_band']].plot(figsize=(10,5))
-      # plt.grid()
-      # plt.show()
-      
     except Exception as e:
       print("Error in BB: ", e)
   
 
-  def _adx(self):
+  def _atr(self, lookback=14):
     """
-      Average Directional Index (ADX) - 1st Approach
+        Average True Range (ATR)
+          - True Range (TR)
     """
-    high_list = []
-    low_list = []
-    close_list = []
-    lookback = 14
-
-    for candle in self.candles:
-      high_list.append(candle.high)
-      low_list.append(candle.low)
-      close_list.append(candle.close)
-    
     try:
+      df = self._candle_dict()
+      atr_df = df.copy()
+      
+      atr_df["H-L"] = atr_df["High"] - atr_df["Low"]
+      atr_df["H-PC"] = abs(atr_df["High"] - atr_df["Close"].shift(1))
+      atr_df["L-PC"] = abs(atr_df["Low"] - atr_df["Close"].shift(1))
 
-      highes = pd.Series(high_list)
-      lows = pd.Series(low_list)
-      closes = pd.Series(close_list)
+      atr_df["TR"] = atr_df[["H-L","H-PC","L-PC"]].max(axis=1, skipna=False)
+      atr_df["ATR"] = atr_df["TR"].ewm(com=lookback, min_periods=lookback).mean()
 
-      plus_dm = highes.diff().dropna()
-      minus_dm = lows.diff().dropna()
+      # atr_df = atr_df.dropna()  # No dropna() func. - All values requrired 
+      # print('atr_df:___\n', atr_df)
 
-      plus_dm[plus_dm < 0] = 0
-      minus_dm[minus_dm > 0] = 0
-
-      tr1 = pd.Series(highes - lows).dropna()
-      tr2 = pd.Series(abs(highes - closes.shift(1)).dropna())
-      tr3 = pd.Series(abs(lows - closes.shift(1).dropna()))
-
-      frames = [tr1, tr2, tr3]
-      tr = pd.concat(frames, axis=1, join='inner').max(axis=1)
-      # atr = tr.rolling(lookback).mean().dropna()
-      atr2 = tr.ewm(com=lookback, min_periods=lookback).mean().dropna()
-
-      plus_di = 100 * (plus_dm.ewm(alpha = 1/lookback).mean() / atr2).dropna()
-      minus_di = abs(100 * (minus_dm.ewm(alpha = 1/lookback).mean() / atr2)).dropna()
-
-      dx = 100 * (abs(plus_di - minus_di) / abs(plus_di + minus_di)).dropna()
-      adx = (((dx.shift(1) * (lookback - 1)) + dx) / lookback).dropna()
-      adx_smooth = adx.ewm(alpha = 1 / lookback, min_periods=lookback ).mean().dropna()
-
-      return atr2.iloc[-2], plus_di.iloc[-2], minus_di.iloc[-2], adx_smooth.iloc[-2]
+      return atr_df["ATR"]
 
     except Exception as e:
-      print("Error in ADXATR1:", e)
+      print("Error in ATR: ", e)
   
 
-  def _adxatr(self):
+  def _adx(self, lookback=14):
     """
-      True Range and Average True Range (ATR)
+        Average Directional Index (ADX)
     """
-    n=14
-    high_list = []
-    low_list = []
-    close_list = []
-
-    for candle in self.candles:
-      high_list.append(candle.high)
-      low_list.append(candle.low)
-      close_list.append(candle.close)
-    
     try:
+      df = self._candle_dict()
+      adx_df = df.copy()
 
-      highes = pd.Series(high_list)
-      lows = pd.Series(low_list)
-      close = pd.Series(close_list)
+      atr = self._atr(lookback)
 
-      hl = (highes - lows)
-      hpc = (abs(highes - close.shift(1)))
-      lpc = (abs(lows - close.shift(1)))
-
-      frames = [hl, hpc, lpc]
-
-      tr = pd.concat(frames, axis=1, join='inner').max(axis=1, skipna=False)
-      atr = tr.ewm(com=n, min_periods=n).mean()
-
-      """
-      Average Directional Index (ADX) - 2nd Approach
-      """
-
-      upmove = (highes - highes.shift(1))
-      downmove = (lows.shift(1) - lows)
+      upmove = adx_df["High"] - adx_df["High"].shift(1)
+      downmove = adx_df["Low"].shift(1) - adx_df["Low"]
 
       plus_dm = np.where((upmove > downmove) & (upmove > 0), upmove, 0.0)
       minus_dm = np.where((downmove > upmove) & (downmove > 0), downmove, 0.0)
 
-      plus_di = 100 * (plus_dm / atr).ewm(com=n, min_periods=n).mean().dropna()
-      minus_di = 100 * (minus_dm / atr).ewm(com=n, min_periods=n).mean().dropna()
+      plus_di = 100 * (plus_dm/atr).ewm(alpha=1/lookback, min_periods=lookback).mean()
+      minus_di = 100 * (minus_dm/atr).ewm(alpha=1/lookback, min_periods=lookback).mean()
 
-      adx = 100 * abs((plus_di - minus_di) / (plus_di + minus_di)).ewm(com=n, min_periods=n).mean().dropna()
-      # print("adx2_______", adx.to_json())
+      adx_df["ADX"] = 100 * abs((plus_di - minus_di) / (plus_di + minus_di)).ewm(alpha=1/lookback, min_periods=lookback).mean()
 
-      return atr.iloc[-2], plus_di.iloc[-2], minus_di.iloc[-2], adx.iloc[-2]
-
-    except Exception as e:
-      print("Error in ADXATR2: ", e)
-      
-
-  def _adxatrcom(self):
-    """
-      ATR and ADX - 3rd Approach 
-    """
-    n=14
-    timeframe_list = []
-    open_list = []
-    high_list = []
-    low_list = []
-    close_list = []
-    volume_list = []
-
-    for candle in self.candles:
-      timeframe_list.append(candle.timestamp)
-      open_list.append(candle.open)
-      high_list.append(candle.high)
-      low_list.append(candle.low)
-      close_list.append(candle.close)
-      volume_list.append(candle.volume)
-
-    try:
-      df = pd.DataFrame(timeframe_list, columns=['timeframe'])
-      df['Open'] = pd.DataFrame(open_list)
-      df['High'] = pd.DataFrame(high_list)
-      df['Low'] = pd.DataFrame(low_list)
-      df['Close'] = pd.DataFrame(close_list)
-      df['Volume'] = pd.DataFrame(volume_list)
-      
-      df["H-L"] = df["High"] - df["Low"]
-      df["H-PC"] = abs(df["High"] - df["Close"].shift(1))
-      df["L-PC"] = abs(df["Low"] - df["Close"].shift(1))
-      df["TR"] = df[["H-L","H-PC","L-PC"]].max(axis=1, skipna=False)
-      df["ATR"] = df["TR"].ewm(com=n, min_periods=n).mean()
-
-      adxdf = df.copy()
-      adxdf["upmove"] = df["High"] - df["High"].shift(1)
-      adxdf["downmove"] = df["Low"].shift(1) - df["Low"]
-      adxdf["+dm"] = np.where((adxdf["upmove"]>adxdf["downmove"]) & (adxdf["upmove"] >0), adxdf["upmove"], 0)
-      adxdf["-dm"] = np.where((adxdf["downmove"]>adxdf["upmove"]) & (adxdf["downmove"] >0), adxdf["downmove"], 0)
-      adxdf["+di"] = 100 * (adxdf["+dm"]/adxdf["ATR"]).ewm(alpha=1/n, min_periods=n).mean()
-      adxdf["-di"] = 100 * (adxdf["-dm"]/df["ATR"]).ewm(alpha=1/n, min_periods=n).mean()
-      adxdf["ADX"] = 100* abs((adxdf["+di"] - adxdf["-di"])/(adxdf["+di"] + adxdf["-di"])).ewm(alpha=1/n, min_periods=n).mean()
-
-      return adxdf["ADX"].iloc[-2]
+      adx_df = adx_df.dropna()
+      # print('adx_df:____ \n', adx_df)
 
     except Exception as e:
-      print("Error ADXATR3:", e)
+      print("Error in ADX:", e)
 
 
   def _renko(self):
@@ -523,11 +401,11 @@ class TechnicalStrategy(Strategy):
       # print('dfatrrenko :: \n', df)
 
       newdf = pd.DataFrame(tf_list, columns=['TF'])
-      newdf['Op'] = pd.DataFrame(open_list)
-      newdf['Hi'] = pd.DataFrame(high_list)
-      newdf['Lo'] = pd.DataFrame(low_list)
-      newdf['Cl'] = pd.DataFrame(close_list)
-      newdf['Vol'] = pd.DataFrame(volume_list)
+      newdf['Op'] = pd.DataFrame(op_list)
+      newdf['Hi'] = pd.DataFrame(hi_list)
+      newdf['Lo'] = pd.DataFrame(lo_list)
+      newdf['Cl'] = pd.DataFrame(cl_list)
+      newdf['Vol'] = pd.DataFrame(vol_list)
       
       # print('newdf :: \n', newdf)
 
@@ -562,57 +440,48 @@ class TechnicalStrategy(Strategy):
       print("Error in Renko", e)
 
 
-  def _disp_in(self):
+  def _disp_in(self, lookback=14):
     """
       Disparity Index (DI)
-        - lookback period - 14
-        - Moving Average (MA)
+        - Moving Average (MA), lookback period - 14
     """
-    lookback = 14
-
     try:
-      df = self._candle_list()
+      df = self._candle_dict()
       disp_df = df.copy()
 
       disp_df['MA'] = disp_df['Close'].rolling(lookback).mean()
       disp_df['DI'] = 100 * ((disp_df['Close'] - disp_df['MA']) / disp_df['MA'])
 
       disp_df = disp_df.dropna()
-      # print('disp_df: \n', disp_df)
+      # print('disp_df: --------\n', disp_df)
       return disp_df['DI'].iloc[-2]
 
     except Exception as e:
       print("Error in DispIn:", e)
 
 
-  def _tsi(self):
+  def _tsi(self, long=25, short=7, signal=12):
     """
       True Strenth Index (TSI)
-          - lookback period for the long EMA - 25
-          - lookback period for the short EMA - 13
-          - lookback period for the signal line EMA - (within 7 to 12 )
+          - lookback periods for: the long EMA - 25; short EMA - 13; signal line EMA - (within 7 to 12 );
     """
-    long = 25
-    short = 7
-    signal = 12
-
     try:
-      df = self._candle_list()
+      df = self._candle_dict()
       tsi_df = df.copy()
 
-      tsi_df['diff'] = tsi_df['Close'] - tsi_df['Close'].shift(1)
-      tsi_df['abs_diff'] = abs(tsi_df['diff'])
+      diff = tsi_df['Close'] - tsi_df['Close'].shift(1)
+      abs_diff = abs(diff)
 
-      tsi_df['diff_smoothed'] = tsi_df['diff'].ewm(span=long, adjust=False).mean()
-      tsi_df['diff_double_smoothed'] = tsi_df['diff_smoothed'].ewm(span=short, adjust=False).mean()
-      tsi_df['abs_diff_smoothed'] = tsi_df['abs_diff'].ewm(span=long, adjust=False).mean()
-      tsi_df['abs_diff_double_smoothed'] = tsi_df['abs_diff_smoothed'].ewm(span=short, adjust=False).mean()
+      diff_smoothed= diff.ewm(span=long, adjust=False).mean()
+      diff_double_smoothed = diff_smoothed.ewm(span=short, adjust=False).mean()
+      abs_diff_smoothed = abs_diff.ewm(span=long, adjust=False).mean()
+      abs_diff_double_smoothed = abs_diff_smoothed.ewm(span=short, adjust=False).mean()
 
-      tsi_df['tsi'] = 100 * (tsi_df['diff_double_smoothed'] / tsi_df['abs_diff_double_smoothed'])
+      tsi_df['tsi'] = 100 * (diff_double_smoothed / abs_diff_double_smoothed)
       tsi_df['tsi_signal'] = tsi_df['tsi'].ewm(span=signal, adjust=False).mean()
 
       tsi_df = tsi_df.dropna()
-      # print("tsi_df: \n", tsi_df)
+      # print("tsi_df:----- \n", tsi_df)
       
       return tsi_df['tsi'].iloc[-2], tsi_df['tsi_signal'].iloc[-2]
 
@@ -620,19 +489,13 @@ class TechnicalStrategy(Strategy):
       print("Error in TSI: ", e)
 
 
-  def _stoch(self):
+  def _stoch(self, k_period=14, d_period=3):
     """
       Stochastic 
-          - n_high 
-          - n_low 
-          - %k (fast line)
-          - %d (slow line)
+          - %K (fast line), %D (slow line)
     """
-    k_period = 14
-    d_period = 3
-
     try:
-      df = self._candle_list()
+      df = self._candle_dict()
       stoch_df = df.copy()
 
       stoch_df['n_high'] = stoch_df['High'].rolling(k_period).max()
@@ -642,25 +505,20 @@ class TechnicalStrategy(Strategy):
       stoch_df['%D'] = stoch_df['%K'].rolling(d_period).mean()
 
       stoch_df = stoch_df.dropna()
-      # print("stoch_df: \n", stoch_df)
+      # print("stoch_df:___ \n", stoch_df)
 
     except Exception as e:
       print("Error in CCI:", e)
     
 
-  def _cci(self):
+  def _cci(self, constant=0.015, lookback=14):
     """
       Commodity Channel Index (CCI)
-          - Typical Price (TP)
-          - Moving Average (SMA)
-          - Mean Deviation (MAD)
+          - Typical Price (TP), Moving Average (SMA), Mean Deviation (MAD)
           - Lambert's constant (0.015)
     """
-    constant = 0.015
-    lookback = 14
-
     try:
-      df  = self._candle_list()
+      df  = self._candle_dict()
       cci_df = df.copy()
 
       cci_df['TP'] = (cci_df['High'] + cci_df['Low'] + cci_df['Close']) / 3
@@ -669,21 +527,19 @@ class TechnicalStrategy(Strategy):
       cci_df['CCI'] = (cci_df['TP'] - cci_df['SMA']) / (constant * cci_df['MAD'])
 
       cci_df = cci_df.dropna()
-      # print("CCI_df: \n", cci_df)
+      # print("CCI_df: ----------\n", cci_df)
 
     except Exception as e:
       print("Error in CCI: ", e)
 
-  def _wir(self):
+
+  def _wir(self, lookback=14):
     """
       Williams %R (WIR)
-        - lookback Highest High (High_H)
-        - lookback Lowest Low (Low_L)
+        - lookback Highest High (High_H), lookback Lowest Low (Low_L)
     """
-    lookback=14
-
     try:
-      df = self._candle_list()
+      df = self._candle_dict()
       wir_df = df.copy()
 
       wir_df['High_H'] = wir_df['High'].rolling(lookback).max()
@@ -691,28 +547,23 @@ class TechnicalStrategy(Strategy):
       wir_df['WIR'] = -100 * ((wir_df['High_H'] - wir_df['Close'])  / (wir_df['High_H'] - wir_df['Low_L']))
 
       wir_df = wir_df.dropna()
-      # print('wir_df: \n', wir_df)
+      # print('wir_df: ------___\n', wir_df)
       
     except Exception as e:
       print("Error in WIR: ", e)
 
 
-  def _ichimoku(self):
+  def _ichimoku(self, cl_period=20, bl_period=60, lead_b_period=120, lag_period=30):
     """
       Ichimoku Cloud (IC)
-        - Tenkan-Sen/Conversion Line      -  Period-20/9
-        - Kijun-Sen/Base Line             -  Period-60/26
-        - Senkou Sen A/Leading Span A     -  Period-30/26
-        - Senkou Sen B/Leading Span B     -  Period-120/52
-        - Chikou/Lagging Span             -  Period-30/26
+        - Tenkan-Sen/Conversion Line   -  Period-20/9
+        - Kijun-Sen/Base Line          -  Period-60/26
+        - Senkou Sen A/Leading Span A  -  Period-30/26
+        - Senkou Sen B/Leading Span B  -  Period-120/52
+        - Chikou/Lagging Span          -  Period-30/26
     """
-    cl_period = 20
-    bl_period = 60
-    lead_b_period = 120
-    lag_period = 30
-
     try:
-      df = self._candle_list()
+      df = self._candle_dict()
       ichi_df = df.copy()
 
       high_20 = ichi_df['High'].rolling(cl_period).max()
@@ -735,23 +586,21 @@ class TechnicalStrategy(Strategy):
       ichi_df['Lagging_span'] = ichi_df['Close'].shift(-lag_period)
 
       ichi_df = ichi_df.dropna()
-      # print('ichi_df: \n', ichi_df)
+      # print('ichi_df:_______--- \n', ichi_df)
 
     except Exception as e:
       print("Error in Ichimoku: ", e)
 
-  def _psar(self):
+
+  def _psar(self, acceleration=0.02, maximum=0.2):
     """
       Parabolic SAR (PSAR)
     """
     # import TA-Lib
     import talib
     
-    acceleration = 0.02
-    maximum = 0.2
-
     try:
-      df = self._candle_list() 
+      df = self._candle_dict() 
       psar = df.copy()
       
       high = psar['High']
@@ -760,11 +609,8 @@ class TechnicalStrategy(Strategy):
       psar['SAR'] = talib.SAR(high, low, acceleration=acceleration, maximum=maximum)
 
       psar = psar.dropna()
-      # print('psar: \n', psar)
-      
-      # psar[['Close', 'SAR']].plot(figsize=(10,5))
-      # plt.grid()
-      # plt.show()
+      # print('psar: ______---\n', psar)
+      return psar['SAR'].iloc[-2]
 
     except Exception as e:
       print("Error in PSAR: ", e)
@@ -778,7 +624,7 @@ class TechnicalStrategy(Strategy):
     """
 
     try:
-      df = self._candle_list()
+      df = self._candle_dict()
       rsi_df = df.copy()
 
       delta = rsi_df['Close'].diff().dropna()
@@ -794,18 +640,18 @@ class TechnicalStrategy(Strategy):
 
       rsi_df['RSI'] = (100 - ( 100 / ( 1 + rs ))).round(2)
       rsi_df = rsi_df.dropna()
-      # print('rsi_df: \n', rsi_df)
+      # print('rsi_df: _______---\n', rsi_df)
 
-      try:
-        figure = plt.Figure(figsize=(8,9), dpi=100)
-        ax = figure.add_subplot(111)
-        chart_type = FigureCanvasTkAgg(figure, self.root)
-        chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
-        df = rsi_df[['RSI']].groupby(rsi_df['DateTime']).sum()
-        df.plot(kind='line', legend=True, ax=ax, fontsize=10)
-        ax.set_title('RSI')
-      except Exception as e:
-        print("Error RSI Graph: ", e)
+      # try:
+      #   figure = plt.Figure(figsize=(8,9), dpi=100)
+      #   ax = figure.add_subplot(111)
+      #   chart_type = FigureCanvasTkAgg(figure, self.root)
+      #   chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+      #   df = rsi_df[['RSI']].groupby(rsi_df['DateTime']).sum()
+      #   df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+      #   ax.set_title('RSI')
+      # except Exception as e:
+      #   print("Error RSI Graph: ", e)
 
       return rsi_df['RSI'].iloc[-2]
 
@@ -824,8 +670,7 @@ class TechnicalStrategy(Strategy):
     """
 
     try:
-
-      df = self._candle_list()
+      df = self._candle_dict()
       macd_df = df.copy()
 
       ema_fast = macd_df['Close'].ewm(span=self._ema_fast).mean() # ewm() -  Exponential Weighted functions
@@ -835,18 +680,18 @@ class TechnicalStrategy(Strategy):
       macd_df['MACD_Signal'] = macd_df['MACD_Line'].ewm(span=self._ema_signal).mean()
 
       macd_df = macd_df.dropna()
-      # print('macd_df: \n', macd_df)
+      # print('macd_df: ---------_____\n', macd_df)
 
-      try:
-        figure = plt.Figure(figsize=(8,9), dpi=100)
-        ax = figure.add_subplot(111)
-        chart_type = FigureCanvasTkAgg(figure, self.root)
-        chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
-        df = macd_df[['MACD_Line','MACD_Signal']].groupby(macd_df['DateTime']).sum()
-        df.plot(kind='line', legend=True, ax=ax, fontsize=10)
-        ax.set_title('MACD')
-      except Exception as e:
-        print("Error MACD Graph: ", e)
+      # try:
+      #   figure = plt.Figure(figsize=(8,9), dpi=100)
+      #   ax = figure.add_subplot(111)
+      #   chart_type = FigureCanvasTkAgg(figure, self.root)
+      #   chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+      #   df = macd_df[['MACD_Line','MACD_Signal']].groupby(macd_df['DateTime']).sum()
+      #   df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+      #   ax.set_title('MACD')
+      # except Exception as e:
+      #   print("Error MACD Graph: ", e)
 
       return macd_df['MACD_Line'].iloc[-2], macd_df['MACD_Signal'].iloc[-2]
       
@@ -861,14 +706,13 @@ class TechnicalStrategy(Strategy):
     """
 
     rsi = self._rsi()
+    macd_line, macd_signal = self._macd()
+    # self._bollinger_band()
+    # self._atr()
+    # self._adx()
     # self. _disp_in()
     # self._tsi()
-    macd_line, macd_signal = self._macd()
     # self._renko()
-    # self._adxatr()
-    # self._adx()
-    # bbdf = self._bollinger_band()
-    # self._adxatrcom()
     # self._stoch()
     # self._cci()
     # self._wir()

@@ -1,0 +1,61 @@
+"""
+# --Technical Indicators Charts--
+
+# --Bollinger Bands--
+
+# -- 1st Method --
+# figure = plt.Figure(figsize=(8,8), dpi=200)
+# ax = figure.add_subplot(111)
+# chart_type = FigureCanvasTkAgg(figure, self.root)
+# chart_type.get_tk_widget().pack()
+# df = bbdf[['Upper_band','Lower_band']].groupby(bbdf['DateTime']).sum()
+# df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+# ax.set_title('Bollinger_Bands')
+# -- 2nd Method --
+# plt.figure(figsize=(2,3), dpi=200)
+# plt.plot(bbdf['timeframe'], bbdf['Upper_band'], label="Upperband")
+# plt.plot(bbdf['timeframe'], bbdf['Lower_band'], label="Lowerband")
+# plt.title("Bollinger Bands", fontdict={'fontsize': 20})
+# plt.xlabel("Timeframe")
+# plt.ylabel("Data")
+# plt.legend()
+# plt.grid()
+# plt.show()
+# -- 3rd Method --
+# bbdf[['Upper_band', 'Lower_band']].plot(figsize=(10,5))
+# plt.grid()
+# plt.show()
+
+
+# --PSAR--
+# psar[['Close', 'SAR']].plot(figsize=(10,5))
+# plt.grid()
+# plt.show()
+
+
+# --RSI--
+# try:
+#   figure = plt.Figure(figsize=(8,9), dpi=100)
+#   ax = figure.add_subplot(111)
+#   chart_type = FigureCanvasTkAgg(figure, self.root)
+#   chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+#   df = rsi_df[['RSI']].groupby(rsi_df['DateTime']).sum()
+#   df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+#   ax.set_title('RSI')
+# except Exception as e:
+#   print("Error RSI Graph: ", e)
+
+
+# --MACD--
+# try:
+#   figure = plt.Figure(figsize=(8,9), dpi=100)
+#   ax = figure.add_subplot(111)
+#   chart_type = FigureCanvasTkAgg(figure, self.root)
+#   chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+#   df = macd_df[['MACD_Line','MACD_Signal']].groupby(macd_df['DateTime']).sum()
+#   df.plot(kind='line', legend=True, ax=ax, fontsize=10)
+#   ax.set_title('MACD')
+# except Exception as e:
+#   print("Error MACD Graph: ", e)
+
+"""
