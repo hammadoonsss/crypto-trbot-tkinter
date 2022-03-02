@@ -1,3 +1,4 @@
+from cProfile import label
 import time
 import logging
 import numpy as np
@@ -614,7 +615,50 @@ class TechnicalStrategy(Strategy):
 
     except Exception as e:
       print("Error in PSAR: ", e)
-  
+
+
+  def _kc(self, multiplier=2, kc_period=20, atr_period=10):
+    """
+      Keltner Channel
+          - close_ema, kc_middle, kc_upper, kc_lower
+    """
+    try:
+      df = self._candle_dict()
+      kc_df = df.copy()
+      atr = self._atr(atr_period)
+
+      close_ema = kc_df['Close'].ewm(kc_period).mean()
+      multi_atr = multiplier * atr
+
+      kc_df['kc_middle'] = close_ema
+      kc_df['kc_upper'] = close_ema + multi_atr
+      kc_df['kc_lower'] = close_ema - multi_atr
+
+      kc_df = kc_df.dropna()
+      print('kc_df: \n', kc_df)
+
+      try:
+        figure = plt.Figure(figsize=(46,67), dpi=200)
+        ax = figure.add_subplot(111)
+        chart_type = FigureCanvasTkAgg(figure, self.root)
+        chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+        uf = kc_df[['kc_upper']].groupby(kc_df['DateTime']).sum()
+        lf = kc_df[['kc_lower']].groupby(kc_df['DateTime']).sum()
+        mf = kc_df[['kc_middle']].groupby(kc_df['DateTime']).sum()
+        cl = kc_df[['Close']].groupby(kc_df['DateTime']).sum()
+        uf.plot(kind='line', linestyle='-.', linewidth=0.5, ax=ax, color='red', fontsize=5)
+        lf.plot(kind='line', linestyle='-.', linewidth=0.5, ax=ax, color='blue', fontsize=5)
+        mf.plot(kind='line', linestyle='--', linewidth=0.5, ax=ax, color='green', fontsize=5)
+        cl.plot(kind='line', linestyle='-', linewidth=0.5, ax=ax, color='#81c2e3', fontsize=5)
+        ax.legend(loc = 'lower right', fontsize=5)
+        ax.set_title('Keltner Channel')
+
+      except Exception as e:
+        print("Error KC Graph: ", e)
+
+    except Exception as e:
+      print("Error in KC: ", e)
+
 
   def _rsi(self):
     """
@@ -718,6 +762,7 @@ class TechnicalStrategy(Strategy):
     # self._wir()
     # self._ichimoku()
     # self._psar()
+    self._kc()
 
 
     if rsi < 30 and macd_line > macd_signal:
