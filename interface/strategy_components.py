@@ -7,7 +7,10 @@ from interface.scrollable_frame import ScrollableFrame
 from connectors.binance_futures import BinanceFuturesClient
 from connectors.bitmex import BitmexClient
 
-from strategies import TechnicalStrategy, BreakoutStrategy
+# from strategies import TechnicalStrategy, BreakoutStrategy
+
+from strategy.technical_strategy import TechnicalStrategy
+from strategy.breakout_strategy import BreakoutStrategy
 
 from utils import *
 
