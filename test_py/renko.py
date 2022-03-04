@@ -55,3 +55,104 @@ for ticker in ohlcv_data:
 # Link to stocktrend github page
 
 # https://github.com/ChillarAnand/stocktrends
+
+"""
+def _renko(self):
+        
+        #   Renko Chart with ATR
+        #         - pip install stocktrends
+        #         - from stocktrends import Renko
+        #         - On Historical Data with different timeframe
+
+
+        n = 120
+        timeframe_list = []
+        open_list = []
+        high_list = []
+        low_list = []
+        close_list = []
+        volume_list = []
+
+        for candle in self.candles:
+            timeframe_list.append(candle.timestamp)
+            open_list.append(candle.open)
+            high_list.append(candle.high)
+            low_list.append(candle.low)
+            close_list.append(candle.close)
+            volume_list.append(candle.volume)
+
+        hist_data = self.client.get_historical_candles(self.contract, "1h")
+        # print('hist_data:__ ', hist_data)
+
+        tf_list = []
+        op_list = []
+        hi_list = []
+        lo_list = []
+        cl_list = []
+        vol_list = []
+
+        for candle in hist_data:
+            tf_list.append(candle.timestamp)
+            op_list.append(candle.open)
+            hi_list.append(candle.high)
+            lo_list.append(candle.low)
+            cl_list.append(candle.close)
+            vol_list.append(candle.volume)
+
+        try:
+            df = pd.DataFrame(timeframe_list, columns=['timeframe'])
+            df['Open'] = pd.DataFrame(open_list)
+            df['High'] = pd.DataFrame(high_list)
+            df['Low'] = pd.DataFrame(low_list)
+            df['Close'] = pd.DataFrame(close_list)
+            df['Volume'] = pd.DataFrame(volume_list)
+
+            print('dfatrrenko :: \n', df)
+
+            newdf = pd.DataFrame(tf_list, columns=['TF'])
+            newdf['Op'] = pd.DataFrame(op_list)
+            newdf['Hi'] = pd.DataFrame(hi_list)
+            newdf['Lo'] = pd.DataFrame(lo_list)
+            newdf['Cl'] = pd.DataFrame(cl_list)
+            newdf['Vol'] = pd.DataFrame(vol_list)
+
+            print('newdf :: \n', newdf)
+
+        except Exception as e:
+            print("Error DF_R-ATR :", e)
+
+        try:
+            atr_df = newdf.copy()
+            print('atr_df:____ ', atr_df)
+            atr_df["H-L"] = atr_df["Hi"] - atr_df["Lo"]
+            atr_df["H-PC"] = abs(atr_df["Hi"] - atr_df["Cl"].shift(1))
+            atr_df["L-PC"] = abs(atr_df["Lo"] - atr_df["Cl"].shift(1))
+            atr_df["TR"] = atr_df[["H-L", "H-PC", "L-PC"]
+                                  ].max(axis=1, skipna=False)
+            atr_df["ATR"] = atr_df["TR"].ewm(com=n, min_periods=n).mean()
+            atr_df = atr_df.dropna()
+            print("atr_df ::--------- \n", atr_df)
+
+        except Exception as e:
+            print("Error ATR-Renko :", e)
+
+        try:
+            ren_df = df.copy()
+            print('ren_df1:________\n', ren_df)
+            # ren_df.reset_index(inplace=True)         #-- Currenty NO
+            ren_df.columns = ["date", "open", "high", "low", "close", "volume"]
+            print('ren_df2: -----\n', ren_df)
+            print('atr_df["ATR"].iloc[-2]: ', atr_df["ATR"].iloc[-2])
+
+            df2 = Renko(ren_df)
+            print('df2: ____\n', df2)
+            df2.brick_size = 3 * round(atr_df["ATR"].iloc[-2], 0)
+            print('df2.brick_size: ____\n', df2.brick_size)
+            renko_df = df2.get_ohlc_data()
+            print('renko_df: \n', renko_df)
+
+            return df2.brick_size, renko_df["uptrend"].iloc[-2]
+
+        except Exception as e:
+            print("Error in Renko:", e)
+"""

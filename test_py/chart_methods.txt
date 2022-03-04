@@ -86,3 +86,35 @@
   #   ax.set_title('Keltner Channel')
 # except Exception as e:
   #   print("Error KC Graph: ", e)
+
+# Keltner Channel Graph Plot
+try:
+    # figure = plt.Figure(figsize=(46, 67), dpi=200)
+    # ax = figure.add_subplot(111)
+    # chart_type = FigureCanvasTkAgg(figure, self.root)
+    # chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+
+    # cl = kc_df[['Close']].groupby(kc_df['DateTime']).sum()
+    # uf = kc_df[['kc_upper']].groupby(kc_df['DateTime']).sum()
+    # lf = kc_df[['kc_lower']].groupby(kc_df['DateTime']).sum()
+    # mf = kc_df[['kc_middle']].groupby(kc_df['DateTime']).sum()
+
+    # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+    #         ax=ax, color='#322e2f', fontsize=5)
+    # uf.plot(kind='line', linestyle='-.', linewidth=0.5,
+    #         ax=ax, color='#990000', fontsize=5)
+    # lf.plot(kind='line', linestyle='-.', linewidth=0.5,
+    #         ax=ax, color='#0b5394', fontsize=5)
+    # mf.plot(kind='line', linestyle='--', linewidth=0.5,
+    #         ax=ax, color='#274e13', fontsize=5)
+
+    # ax.xticks(kc_df['DateTime'], rotation=90)
+    # ax.legend(loc='lower right', fontsize=5)
+    # ax.set_title('--Keltner Channel--')
+# ---------------------------------------------
+    cl = kc_df[['Close', 'kc_upper', 'kc_lower','kc_middle']].groupby(kc_df['DateTime']).sum()
+    cl.plot( y=['Close', 'kc_upper', 'kc_lower','kc_middle'], kind='line')
+    plt.show()
+
+except Exception as e:
+    print("Error KC Graph: ", e)
