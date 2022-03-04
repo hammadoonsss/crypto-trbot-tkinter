@@ -135,7 +135,7 @@ class TechnicalStrategy(Strategy):
                 com=lookback, min_periods=lookback).mean()
 
             # atr_df = atr_df.dropna()  # No dropna() func. - All values requrired
-            print('atr_df:___\n', atr_df)
+            # print('atr_df:___\n', atr_df)
 
             # Average True Range Graph Plot
             # try:
@@ -155,7 +155,7 @@ class TechnicalStrategy(Strategy):
             # except Exception as e:
             #     print("Error ATR Graph: ", e)
 
-            return atr_df["ATR"]
+            return atr_df
 
         except Exception as e:
             print("Error in ATR: ", e)
@@ -177,9 +177,9 @@ class TechnicalStrategy(Strategy):
             minus_dm = np.where((downmove > upmove) &
                                 (downmove > 0), downmove, 0.0)
 
-            adx_df['plus_di'] = 100 * (plus_dm/atr).ewm(alpha=1/lookback, \
+            adx_df['plus_di'] = 100 * (plus_dm/atr['ATR']).ewm(alpha=1/lookback, \
                                                         min_periods=lookback).mean()
-            adx_df['minus_di'] = 100 * (minus_dm/atr).ewm(alpha=1/lookback, \
+            adx_df['minus_di'] = 100 * (minus_dm/atr['ATR']).ewm(alpha=1/lookback, \
                                                         min_periods=lookback).mean()
 
             pmm = adx_df['plus_di'] - adx_df['minus_di']
@@ -199,7 +199,7 @@ class TechnicalStrategy(Strategy):
                 chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
                 # cl = adx_df[['Close']].groupby(adx_df['DateTime']).sum()
-                at = atr.groupby(adx_df['DateTime']).sum()
+                at = atr[['ATR']].groupby(adx_df['DateTime']).sum()
                 ad = adx_df[['ADX']].groupby(adx_df['DateTime']).sum()
 
                 # cl.plot(kind='line', linestyle='-', linewidth=0.5,
@@ -210,7 +210,7 @@ class TechnicalStrategy(Strategy):
                         ax=ax, color='#5c3c92', fontsize=5)
 
                 ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Average Directional Index--')
+                ax.set_title('--Average True Range & Average Directional Index--')
 
             except Exception as e:
                 print("Error ADX Graph: ", e)
@@ -300,7 +300,7 @@ class TechnicalStrategy(Strategy):
             print("Error ATR-Renko :", e)
 
         try:
-            # ----some error occur in renko---- 
+            # ----some error occur in Renko!!---- 
             ren_df = df.copy()
             print('ren_df1:________\n', ren_df)
             # ren_df.reset_index(inplace=True)         #-- Currenty NO
@@ -405,7 +405,7 @@ class TechnicalStrategy(Strategy):
                 ts.plot(kind='line', linestyle='-.', linewidth=0.5,
                         ax=ax, color='#7f593a', fontsize=5)
                 ti.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#3a7f43', fontsize=5)
+                        ax=ax, color='#2181e0', fontsize=5)
 
                 ax.legend(loc='lower right', fontsize=5)
                 ax.set_title('--True Strenth Index--')
@@ -452,8 +452,8 @@ class TechnicalStrategy(Strategy):
                 #         ax=ax, color='#322e2f', fontsize=5)
                 kp.plot(kind='line', linestyle='-.', linewidth=0.5,
                         ax=ax, color='#1d3c45', fontsize=5)
-                dp.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#d2601a', fontsize=5)
+                dp.plot(kind='line', linestyle='--', linewidth=0.5,
+                        ax=ax, color='#40ba5e', fontsize=5)
 
                 ax.legend(loc='lower right', fontsize=5)
                 ax.set_title('--Stochastic--')
@@ -502,11 +502,11 @@ class TechnicalStrategy(Strategy):
                 #         ax=ax, color='#322e2f', fontsize=5)
                 ma.plot(kind='line', linestyle='-.', linewidth=0.5,
                         ax=ax, color='#9d1717', fontsize=5)
-                ci.plot(kind='line', linestyle='-.', linewidth=0.5,
+                ci.plot(kind='line', linestyle='--', linewidth=0.5,
                         ax=ax, color='#1e3d59', fontsize=5)
 
                 ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('-- Commodity Channel Index--')
+                ax.set_title('--Commodity Channel Index--')
 
             except Exception as e:
                 print("Error CCI Graph: ", e)
@@ -519,7 +519,7 @@ class TechnicalStrategy(Strategy):
     def _wir(self, lookback=14):
         """
         Williams %R (WIR)
-        - lookback Highest High (High_H), lookback Lowest Low (Low_L)
+        - lookback, Highest High (High_H), Lowest Low (Low_L)
         """
         try:
             df = self._candle_dict()
@@ -531,7 +531,7 @@ class TechnicalStrategy(Strategy):
                                     (wir_df['High_H'] - wir_df['Low_L']))
 
             wir_df = wir_df.dropna()
-            print('wir_df: ------___\n', wir_df)
+            # print('wir_df: ------___\n', wir_df)
 
             # Williams %R Graph Plot
             try:
@@ -594,7 +594,7 @@ class TechnicalStrategy(Strategy):
             ichi_df['Lagging_span'] = ichi_df['Close'].shift(-lag_period)
 
             ichi_df = ichi_df.dropna()
-            print('ichi_df:_______--- \n', ichi_df)
+            # print('ichi_df:_______--- \n', ichi_df)
 
             # Ichimoku Cloud Graph Plot
             try:
@@ -671,9 +671,9 @@ class TechnicalStrategy(Strategy):
                 ax.set_title('--Parabolic SAR--')
 
             except Exception as e:
-                print("Error WIR Graph: ", e)
+                print("Error PSAR Graph: ", e)
 
-            return psar['SAR'].iloc[-2]
+            return psar['SAR']
 
         except Exception as e:
             print("Error in PSAR: ", e)
@@ -689,7 +689,7 @@ class TechnicalStrategy(Strategy):
             atr = self._atr(atr_period)
 
             close_ema = kc_df['Close'].ewm(kc_period).mean()
-            multi_atr = multiplier * atr
+            multi_atr = multiplier * atr['ATR']
 
             kc_df['kc_middle'] = close_ema
             kc_df['kc_upper'] = close_ema + multi_atr
@@ -803,18 +803,28 @@ class TechnicalStrategy(Strategy):
 
             rsi_df['RSI'] = (100 - (100 / (1 + rs))).round(2)
             rsi_df = rsi_df.dropna()
-            # print('rsi_df: _______---\n', rsi_df)
+            print('rsi_df: _______---\n', rsi_df)
 
+            # Relative Strength Index Graph Plot
             # try:
-            #   figure = plt.Figure(figsize=(8,9), dpi=100)
-            #   ax = figure.add_subplot(111)
-            #   chart_type = FigureCanvasTkAgg(figure, self.root)
-            #   chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
-            #   df = rsi_df[['RSI']].groupby(rsi_df['DateTime']).sum()
-            #   df.plot(kind='line', legend=True, ax=ax, fontsize=10)
-            #   ax.set_title('RSI')
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+
+            #     # cl = rsi_df[['Close']].groupby(rsi_df['DateTime']).sum()
+            #     rs = rsi_df[['RSI']].groupby(rsi_df['DateTime']).sum()
+
+            #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #     #         ax=ax, color='#322e2f', fontsize=5)
+            #     rs.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#811481', fontsize=5)
+
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Relative Strength Index--')
+
             # except Exception as e:
-            #   print("Error RSI Graph: ", e)
+            #     print("Error RSI Graph: ", e)
 
             return rsi_df['RSI'].iloc[-2]
 
@@ -847,16 +857,29 @@ class TechnicalStrategy(Strategy):
             macd_df = macd_df.dropna()
             # print('macd_df: ---------_____\n', macd_df)
 
+            # Moving Average Convergence Divergence Graph Plot
             # try:
-            #   figure = plt.Figure(figsize=(8,9), dpi=100)
-            #   ax = figure.add_subplot(111)
-            #   chart_type = FigureCanvasTkAgg(figure, self.root)
-            #   chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
-            #   df = macd_df[['MACD_Line','MACD_Signal']].groupby(macd_df['DateTime']).sum()
-            #   df.plot(kind='line', legend=True, ax=ax, fontsize=10)
-            #   ax.set_title('MACD')
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+
+            #     # cl = macd_df[['Close']].groupby(macd_df['DateTime']).sum()
+            #     ml = macd_df[['MACD_Line']].groupby(macd_df['DateTime']).sum()
+            #     ms = macd_df[['MACD_Signal']].groupby(macd_df['DateTime']).sum()
+
+            #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #     #         ax=ax, color='#322e2f', fontsize=5)
+            #     ml.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#811414', fontsize=5)
+            #     ms.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#1b1481', fontsize=5)
+
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Moving Average Convergence Divergence--')
+
             # except Exception as e:
-            #   print("Error MACD Graph: ", e)
+            #     print("Error MACD Graph: ", e)
 
             return macd_df['MACD_Line'].iloc[-2], macd_df['MACD_Signal'].iloc[-2]
 
