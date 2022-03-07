@@ -87,28 +87,28 @@ class TechnicalStrategy(Strategy):
             # print("bbdf: \n", bbdf)
 
             # Bollinger Band Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                cl = bbdf[['Close']].groupby(bbdf['DateTime']).sum()
-                ub = bbdf[['Upper_band']].groupby(bbdf['DateTime']).sum()
-                lb = bbdf[['Lower_band']].groupby(bbdf['DateTime']).sum()
+            #     cl = bbdf[['Close']].groupby(bbdf['DateTime']).sum()
+            #     ub = bbdf[['Upper_band']].groupby(bbdf['DateTime']).sum()
+            #     lb = bbdf[['Lower_band']].groupby(bbdf['DateTime']).sum()
 
-                cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                        ax=ax, color='#322e2f', fontsize=5)
-                ub.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#d72631', fontsize=5)
-                lb.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#5c3c92', fontsize=5)
+            #     cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #             ax=ax, color='#322e2f', fontsize=5)
+            #     ub.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#d72631', fontsize=5)
+            #     lb.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#5c3c92', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Bollinger Band--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Bollinger Band--')
 
-            except Exception as e:
-                print("Error BB Graph: ", e)
+            # except Exception as e:
+            #     print("Error BB Graph: ", e)
 
             return bbdf
 
@@ -192,28 +192,28 @@ class TechnicalStrategy(Strategy):
             # print('adx_df:____ \n', adx_df)
 
             # Average Directional Index Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                # cl = adx_df[['Close']].groupby(adx_df['DateTime']).sum()
-                at = atr[['ATR']].groupby(adx_df['DateTime']).sum()
-                ad = adx_df[['ADX']].groupby(adx_df['DateTime']).sum()
+            #     # cl = adx_df[['Close']].groupby(adx_df['DateTime']).sum()
+            #     at = atr[['ATR']].groupby(adx_df['DateTime']).sum()
+            #     ad = adx_df[['ADX']].groupby(adx_df['DateTime']).sum()
 
-                # cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                #         ax=ax, color='#322e2f', fontsize=5)
-                at.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#d72631', fontsize=5)
-                ad.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#5c3c92', fontsize=5)
+            #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #     #         ax=ax, color='#322e2f', fontsize=5)
+            #     at.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#d72631', fontsize=5)
+            #     ad.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#5c3c92', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Average True Range & Average Directional Index--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Average True Range & Average Directional Index--')
 
-            except Exception as e:
-                print("Error ADX Graph: ", e)
+            # except Exception as e:
+            #     print("Error ADX Graph: ", e)
 
             return adx_df
 
@@ -337,25 +337,25 @@ class TechnicalStrategy(Strategy):
             # print('disp_df: --------\n', disp_df)
 
             #  Disparity Index Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                # cl = disp_df[['Close']].groupby(disp_df['DateTime']).sum()
-                di = disp_df[['DI']].groupby(disp_df['DateTime']).sum()
+            #     # cl = disp_df[['Close']].groupby(disp_df['DateTime']).sum()
+            #     di = disp_df[['DI']].groupby(disp_df['DateTime']).sum()
 
-                # cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                #         ax=ax, color='#322e2f', fontsize=5)
-                di.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#1d2887', fontsize=5)
+            #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #     #         ax=ax, color='#322e2f', fontsize=5)
+            #     di.plot(kind='line', linestyle='--', linewidth=0.5,
+            #             ax=ax, color='#1d2887', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Disparity Index--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Disparity Index--')
 
-            except Exception as e:
-                print("Error DispIn Graph: ", e)
+            # except Exception as e:
+            #     print("Error DispIn Graph: ", e)
 
             return disp_df['DI'].iloc[-2]
 
@@ -387,31 +387,31 @@ class TechnicalStrategy(Strategy):
                 span=signal, adjust=False).mean()
 
             tsi_df = tsi_df.dropna()
-            print("tsi_df:----- \n", tsi_df)
+            # print("tsi_df:----- \n", tsi_df)
 
             #  True Strenth Index Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                # cl = tsi_df[['Close']].groupby(tsi_df['DateTime']).sum()
-                ts = tsi_df[['tsi']].groupby(tsi_df['DateTime']).sum()
-                ti = tsi_df[['tsi_signal']].groupby(tsi_df['DateTime']).sum()
+            #     # cl = tsi_df[['Close']].groupby(tsi_df['DateTime']).sum()
+            #     ts = tsi_df[['tsi']].groupby(tsi_df['DateTime']).sum()
+            #     ti = tsi_df[['tsi_signal']].groupby(tsi_df['DateTime']).sum()
 
-                # cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                #         ax=ax, color='#322e2f', fontsize=5)
-                ts.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#7f593a', fontsize=5)
-                ti.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#2181e0', fontsize=5)
+            #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #     #         ax=ax, color='#322e2f', fontsize=5)
+            #     ts.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#7f593a', fontsize=5)
+            #     ti.plot(kind='line', linestyle='--', linewidth=0.5,
+            #             ax=ax, color='#2181e0', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--True Strenth Index--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--True Strenth Index--')
 
-            except Exception as e:
-                print("Error TSI Graph: ", e)
+            # except Exception as e:
+            #     print("Error TSI Graph: ", e)
 
             return tsi_df['tsi'].iloc[-2], tsi_df['tsi_signal'].iloc[-2]
 
@@ -435,31 +435,31 @@ class TechnicalStrategy(Strategy):
             stoch_df['%D'] = stoch_df['%K'].rolling(d_period).mean()
 
             stoch_df = stoch_df.dropna()
-            print("stoch_df:___ \n", stoch_df)
+            # print("stoch_df:___ \n", stoch_df)
 
             #  Stochastic Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                # cl = stoch_df[['Close']].groupby(stoch_df['DateTime']).sum()
-                kp = stoch_df[['%K']].groupby(stoch_df['DateTime']).sum()
-                dp = stoch_df[['%D']].groupby(stoch_df['DateTime']).sum()
+            #     # cl = stoch_df[['Close']].groupby(stoch_df['DateTime']).sum()
+            #     kp = stoch_df[['%K']].groupby(stoch_df['DateTime']).sum()
+            #     dp = stoch_df[['%D']].groupby(stoch_df['DateTime']).sum()
 
-                # cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                #         ax=ax, color='#322e2f', fontsize=5)
-                kp.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#1d3c45', fontsize=5)
-                dp.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#40ba5e', fontsize=5)
+            #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #     #         ax=ax, color='#322e2f', fontsize=5)
+            #     kp.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#1d3c45', fontsize=5)
+            #     dp.plot(kind='line', linestyle='--', linewidth=0.5,
+            #             ax=ax, color='#40ba5e', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Stochastic--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Stochastic--')
 
-            except Exception as e:
-                print("Error Stoch Graph: ", e)
+            # except Exception as e:
+            #     print("Error Stoch Graph: ", e)
 
             return stoch_df
 
@@ -485,31 +485,31 @@ class TechnicalStrategy(Strategy):
                 (constant * cci_df['MAD'])
 
             cci_df = cci_df.dropna()
-            print("CCI_df: ----------\n", cci_df)
+            # print("CCI_df: ----------\n", cci_df)
 
             #  Commodity Channel Index Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                # cl = cci_df[['Close']].groupby(cci_df['DateTime']).sum()
-                ma = cci_df[['MAD']].groupby(cci_df['DateTime']).sum()
-                ci = cci_df[['CCI']].groupby(cci_df['DateTime']).sum()
+            #     # cl = cci_df[['Close']].groupby(cci_df['DateTime']).sum()
+            #     ma = cci_df[['MAD']].groupby(cci_df['DateTime']).sum()
+            #     ci = cci_df[['CCI']].groupby(cci_df['DateTime']).sum()
 
-                # cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                #         ax=ax, color='#322e2f', fontsize=5)
-                ma.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#9d1717', fontsize=5)
-                ci.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#1e3d59', fontsize=5)
+            #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #     #         ax=ax, color='#322e2f', fontsize=5)
+            #     ma.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#9d1717', fontsize=5)
+            #     ci.plot(kind='line', linestyle='--', linewidth=0.5,
+            #             ax=ax, color='#1e3d59', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Commodity Channel Index--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Commodity Channel Index--')
 
-            except Exception as e:
-                print("Error CCI Graph: ", e)
+            # except Exception as e:
+            #     print("Error CCI Graph: ", e)
 
             return cci_df
 
@@ -534,25 +534,25 @@ class TechnicalStrategy(Strategy):
             # print('wir_df: ------___\n', wir_df)
 
             # Williams %R Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                # cl = wir_df[['Close']].groupby(wir_df['DateTime']).sum()
-                wi = wir_df[['WIR']].groupby(wir_df['DateTime']).sum()
+            #     # cl = wir_df[['Close']].groupby(wir_df['DateTime']).sum()
+            #     wi = wir_df[['WIR']].groupby(wir_df['DateTime']).sum()
 
-                # cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                #         ax=ax, color='#322e2f', fontsize=5)
-                wi.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#1b6535', fontsize=5)
+            #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #     #         ax=ax, color='#322e2f', fontsize=5)
+            #     wi.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#1b6535', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Williams %R--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Williams %R--')
 
-            except Exception as e:
-                print("Error WIR Graph: ", e)
+            # except Exception as e:
+            #     print("Error WIR Graph: ", e)
 
             return wir_df
 
@@ -597,37 +597,37 @@ class TechnicalStrategy(Strategy):
             # print('ichi_df:_______--- \n', ichi_df)
 
             # Ichimoku Cloud Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                cl = ichi_df[['Close']].groupby(ichi_df['DateTime']).sum()
-                co = ichi_df[['Conversion_Line']].groupby(ichi_df['DateTime']).sum()
-                ba = ichi_df[['Base_Line']].groupby(ichi_df['DateTime']).sum()
-                la = ichi_df[['Lead_span_A']].groupby(ichi_df['DateTime']).sum()
-                lb = ichi_df[['Lead_span_B']].groupby(ichi_df['DateTime']).sum()
-                ls = ichi_df[['Lagging_span']].groupby(ichi_df['DateTime']).sum()
+            #     cl = ichi_df[['Close']].groupby(ichi_df['DateTime']).sum()
+            #     co = ichi_df[['Conversion_Line']].groupby(ichi_df['DateTime']).sum()
+            #     ba = ichi_df[['Base_Line']].groupby(ichi_df['DateTime']).sum()
+            #     la = ichi_df[['Lead_span_A']].groupby(ichi_df['DateTime']).sum()
+            #     lb = ichi_df[['Lead_span_B']].groupby(ichi_df['DateTime']).sum()
+            #     ls = ichi_df[['Lagging_span']].groupby(ichi_df['DateTime']).sum()
 
-                cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                        ax=ax, color='#322e2f', fontsize=5)
-                co.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#711515', fontsize=5)
-                ba.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#2a7115', fontsize=5)
-                la.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#156f71', fontsize=5)
-                lb.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#201571', fontsize=5)
-                ls.plot(kind='line', linestyle=':', linewidth=0.5,
-                        ax=ax, color='#71154c', fontsize=5)
+            #     cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #             ax=ax, color='#322e2f', fontsize=5)
+            #     co.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#711515', fontsize=5)
+            #     ba.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#2a7115', fontsize=5)
+            #     la.plot(kind='line', linestyle='--', linewidth=0.5,
+            #             ax=ax, color='#156f71', fontsize=5)
+            #     lb.plot(kind='line', linestyle='--', linewidth=0.5,
+            #             ax=ax, color='#201571', fontsize=5)
+            #     ls.plot(kind='line', linestyle=':', linewidth=0.5,
+            #             ax=ax, color='#71154c', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Ichimoku Cloud--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Ichimoku Cloud--')
 
-            except Exception as e:
-                print("Error Ichimoku Graph: ", e)
+            # except Exception as e:
+            #     print("Error Ichimoku Graph: ", e)
 
             return ichi_df
 
@@ -653,25 +653,25 @@ class TechnicalStrategy(Strategy):
             # print('psar: ______---\n', psar)
 
             # Parabolic SAR Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                cl = psar[['Close']].groupby(psar['DateTime']).sum()
-                sa = psar[['SAR']].groupby(psar['DateTime']).sum()
+            #     cl = psar[['Close']].groupby(psar['DateTime']).sum()
+            #     sa = psar[['SAR']].groupby(psar['DateTime']).sum()
 
-                cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                        ax=ax, color='#322e2f', fontsize=5)
-                sa.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#15686d', fontsize=5)
+            #     cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #             ax=ax, color='#322e2f', fontsize=5)
+            #     sa.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#15686d', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Parabolic SAR--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Parabolic SAR--')
 
-            except Exception as e:
-                print("Error PSAR Graph: ", e)
+            # except Exception as e:
+            #     print("Error PSAR Graph: ", e)
 
             return psar['SAR']
 
@@ -696,35 +696,35 @@ class TechnicalStrategy(Strategy):
             kc_df['kc_lower'] = close_ema - multi_atr
 
             kc_df = kc_df.dropna()
-            print('kc_df: \n', kc_df)
+            # print('kc_df: \n', kc_df)
 
             # Keltner Channel Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                cl = kc_df[['Close']].groupby(kc_df['DateTime']).sum()
-                uf = kc_df[['kc_upper']].groupby(kc_df['DateTime']).sum()
-                lf = kc_df[['kc_lower']].groupby(kc_df['DateTime']).sum()
-                mf = kc_df[['kc_middle']].groupby(kc_df['DateTime']).sum()
+            #     cl = kc_df[['Close']].groupby(kc_df['DateTime']).sum()
+            #     uf = kc_df[['kc_upper']].groupby(kc_df['DateTime']).sum()
+            #     lf = kc_df[['kc_lower']].groupby(kc_df['DateTime']).sum()
+            #     mf = kc_df[['kc_middle']].groupby(kc_df['DateTime']).sum()
 
-                cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                        ax=ax, color='#322e2f', fontsize=5)
-                uf.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#990000', fontsize=5)
-                lf.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#0b5394', fontsize=5)
-                mf.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#274e13', fontsize=5)
+            #     cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #             ax=ax, color='#322e2f', fontsize=5)
+            #     uf.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#990000', fontsize=5)
+            #     lf.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#0b5394', fontsize=5)
+            #     mf.plot(kind='line', linestyle='--', linewidth=0.5,
+            #             ax=ax, color='#274e13', fontsize=5)
 
-                # ax.xticks(kc_df['DateTime'], rotation=90)
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Keltner Channel--')
+            #     # ax.xticks(kc_df['DateTime'], rotation=90)
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Keltner Channel--')
 
-            except Exception as e:
-                print("Error KC Graph: ", e)
+            # except Exception as e:
+            #     print("Error KC Graph: ", e)
 
         except Exception as e:
             print("Error in KC: ", e)
@@ -745,34 +745,34 @@ class TechnicalStrategy(Strategy):
             env_df['env_lower'] = close_sma - (close_sma * constant)
 
             env_df = env_df.dropna()
-            print('env_df: \n', env_df)
+            # print('env_df: \n', env_df)
 
             # Envelopes Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                cl = env_df[['Close']].groupby(env_df['DateTime']).sum()
-                uf = env_df[['env_upper']].groupby(env_df['DateTime']).sum()
-                lf = env_df[['env_lower']].groupby(env_df['DateTime']).sum()
-                mf = env_df[['env_middle']].groupby(env_df['DateTime']).sum()
+            #     cl = env_df[['Close']].groupby(env_df['DateTime']).sum()
+            #     uf = env_df[['env_upper']].groupby(env_df['DateTime']).sum()
+            #     lf = env_df[['env_lower']].groupby(env_df['DateTime']).sum()
+            #     mf = env_df[['env_middle']].groupby(env_df['DateTime']).sum()
 
-                cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                        ax=ax, color='#322e2f', fontsize=5)
-                uf.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#e2d810', fontsize=5)
-                lf.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#d9138a', fontsize=5)
-                mf.plot(kind='line', linestyle='--', linewidth=0.5,
-                        ax=ax, color='#12a4d9', fontsize=5)
+            #     cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #             ax=ax, color='#322e2f', fontsize=5)
+            #     uf.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#e2d810', fontsize=5)
+            #     lf.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#d9138a', fontsize=5)
+            #     mf.plot(kind='line', linestyle='--', linewidth=0.5,
+            #             ax=ax, color='#12a4d9', fontsize=5)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Envelopes--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Envelopes--')
 
-            except Exception as e:
-                print("Error ENV Graph: ", e)
+            # except Exception as e:
+            #     print("Error ENV Graph: ", e)
 
         except Exception as e:
             print("Error in ENV: ", e)
@@ -803,7 +803,7 @@ class TechnicalStrategy(Strategy):
 
             rsi_df['RSI'] = (100 - (100 / (1 + rs))).round(2)
             rsi_df = rsi_df.dropna()
-            print('rsi_df: _______---\n', rsi_df)
+            # print('rsi_df: _______---\n', rsi_df)
 
             # Relative Strength Index Graph Plot
             # try:
@@ -899,7 +899,7 @@ class TechnicalStrategy(Strategy):
         # self._adx()
         # self. _disp_in()
         # self._tsi()
-        self._renko()
+        # self._renko()
         # self._stoch()
         # self._cci()
         # self._wir()
