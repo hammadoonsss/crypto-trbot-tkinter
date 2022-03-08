@@ -80,35 +80,65 @@ class TechnicalStrategy(Strategy):
             ma = bbdf['Close'].rolling(bb_period).mean()
             std = bbdf['Close'].rolling(bb_period).std()
 
-            bbdf['Upper_band'] = ma + bb_multiplier * std
-            bbdf['Lower_band'] = ma - bb_multiplier * std
+            bbdf['Upper_band']=(ma + bb_multiplier * std).round(1)
+            bbdf['Lower_band']=(ma - bb_multiplier * std).round(1)
 
             bbdf = bbdf.dropna()
-            # print("bbdf: \n", bbdf)
+
+            bbdf['buy_price'], bbdf['sell_price'], bbdf['bb_signal'] = self.implement_bb_strategy(bbdf)
+            # print("buy, sell, bb_signal:", buy_price, sell_price, bb_signal)
+            # self.implement_bb_strategy(bbdf)
+
+            print("bbdf: \n", bbdf)
 
             # Bollinger Band Graph Plot
-            # try:
-            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
-            #     ax = figure.add_subplot(111)
-            #     chart_type = FigureCanvasTkAgg(figure, self.root)
-            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            try:
+                figure = plt.Figure(figsize=(46, 67), dpi=200)
+                ax = figure.add_subplot(111)
+                ax.scatter(bbdf['DateTime'],bbdf['buy_price'], color = 'g', marker = '^', label = 'BUY',)
+                ax.scatter(bbdf['DateTime'],bbdf['sell_price'], color = 'r', marker = 'v', label = 'SELL',)
+                chart_type = FigureCanvasTkAgg(figure, self.root)
+                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+                scatter3 = FigureCanvasTkAgg(figure, self.root) 
+                scatter3.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-            #     cl = bbdf[['Close']].groupby(bbdf['DateTime']).sum()
-            #     ub = bbdf[['Upper_band']].groupby(bbdf['DateTime']).sum()
-            #     lb = bbdf[['Lower_band']].groupby(bbdf['DateTime']).sum()
+                cl = bbdf[['Close']].groupby(bbdf['DateTime']).sum()
+                ub = bbdf[['Upper_band']].groupby(bbdf['DateTime']).sum()
+                lb = bbdf[['Lower_band']].groupby(bbdf['DateTime']).sum()
 
-            #     cl.plot(kind='line', linestyle='-', linewidth=0.5,
-            #             ax=ax, color='#322e2f', fontsize=5)
-            #     ub.plot(kind='line', linestyle='-.', linewidth=0.5,
-            #             ax=ax, color='#d72631', fontsize=5)
-            #     lb.plot(kind='line', linestyle='-.', linewidth=0.5,
-            #             ax=ax, color='#5c3c92', fontsize=5)
+                cl.plot(kind='line', linestyle='-', linewidth=0.5,
+                        ax=ax, color='#322e2f', fontsize=5)
+                ub.plot(kind='line', linestyle='-.', linewidth=0.5,
+                        ax=ax, color='#d72631', fontsize=5)
+                lb.plot(kind='line', linestyle='-.', linewidth=0.5,
+                        ax=ax, color='#5c3c92', fontsize=5)
+                
+                ax.legend(loc='lower right', fontsize=5)
+                ax.set_title('--Bollinger Band--')
 
-            #     ax.legend(loc='lower right', fontsize=5)
-            #     ax.set_title('--Bollinger Band--')
+                # ax.legend(loc='lower right', fontsize=5)
+                # ax.set_title('--Bollinger Band--')
+                # figure3 = plt.Figure(figsize=(5,4), dpi=100)
+                # ax3 = figure3.add_subplot(111)
+                # ax3.scatter(df3['Interest_Rate'],df3['Stock_Index_Price'], color = 'g')
+                # scatter3 = FigureCanvasTkAgg(figure3, root) 
+                # scatter3.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+                # ax3.legend(['Stock_Index_Price']) 
+                # ax3.set_xlabel('Interest Rate')
+                # ax3.set_title('Interest Rate Vs. Stock Index Price')
 
-            # except Exception as e:
-            #     print("Error BB Graph: ", e)
+                # bbdf['Close'].plot(label = 'CLOSE PRICES', alpha = 0.3)
+                # bbdf['Upper_band'].plot(label = 'UPPER BB', linestyle = '--', linewidth = 1, color = 'red')
+                # ma.plot(label = 'MIDDLE BB', linestyle = '-.', linewidth = 1.2, color = 'grey')
+                # bbdf['Lower_band'].plot(label = 'LOWER BB', linestyle = '--', linewidth = 1, color = 'blue')
+                # plt.scatter(bbdf['DateTime'], bbdf['buy_price'], marker = '^', color = 'green', label = 'BUY', s = 200)
+                # plt.scatter(bbdf['DateTime'], bbdf['sell_price'], marker = 'v', color = 'red', label = 'SELL', s = 200)
+                # plt.title(' BB STRATEGY TRADING SIGNALS')
+                # plt.legend(loc = 'upper left')
+                # plt.show()
+
+            except Exception as e:
+                print("Error BB Graph: ", e)
 
             return bbdf
 
@@ -894,7 +924,7 @@ class TechnicalStrategy(Strategy):
 
         rsi = self._rsi()
         macd_line, macd_signal = self._macd()
-        # self._bollinger_band()
+        self._bollinger_band()
         # self._atr()
         # self._adx()
         # self. _disp_in()
@@ -922,3 +952,56 @@ class TechnicalStrategy(Strategy):
 
             if signal_result in [1, -1]:
                 self._open_position(signal_result)
+
+    def implement_bb_strategy(self, data):
+        buy_price=[]
+        sell_price=[]
+        bb_signal=[]
+        signal=0
+        print('inside : ibbs__________' )
+
+        data = data
+
+        close = data['Close']
+        print('close: ', type(close))
+        upper_bb = data['Upper_band']
+        lower_bb = data['Lower_band']
+
+        try:
+            for i in range(len(close)):
+                # print("-------------------------",close[i])
+                if close.iloc[i-1] > lower_bb.iloc[i-1] and close.iloc[i] < lower_bb.iloc[i]:
+
+                    print("inside 1st if__________")
+                    if signal != 1:
+                        buy_price.append(close.iloc[i])
+                        sell_price.append(np.nan)
+                        signal = 1
+                        bb_signal.append(signal)
+
+                    else:
+                        buy_price.append(np.nan)
+                        sell_price.append(np.nan)
+                        bb_signal.append(0)
+
+                elif close.iloc[i-1] < upper_bb.iloc[i-1] and close.iloc[i] > upper_bb.iloc[i]:
+                    print("inside 1st else__________")
+
+                    if signal != -1:
+                        buy_price.append(np.nan)
+                        sell_price.append(close.iloc[i])
+                        signal = -1
+                        bb_signal.append(signal)
+                    else:
+                        buy_price.append(np.nan)
+                        sell_price.append(np.nan)
+                        bb_signal.append(0)
+                else:
+                    buy_price.append(np.nan)
+                    sell_price.append(np.nan)
+                    bb_signal.append(0)
+        except Exception as e:
+            print('Error in ibbs: ', e)
+
+        return buy_price, sell_price, bb_signal
+        
