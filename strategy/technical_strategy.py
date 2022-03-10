@@ -83,9 +83,9 @@ class TechnicalStrategy(Strategy):
             bbdf['Upper_band'] = (ma + bb_multiplier * std).round(1)
             bbdf['Lower_band'] = (ma - bb_multiplier * std).round(1)
 
-            bbdf = bbdf.dropna()
+            # bbdf = bbdf.dropna()
 
-            bbdf['buy_price'], bbdf['sell_price'], bbdf['bb_signal'] = self.implement_bb_strategy(
+            bbdf['buy_price'], bbdf['sell_price'], bbdf['bb_signal'] = self._implement_bb_strategy(
                 bbdf)
             # print("buy, sell, bb_signal:", buy_price, sell_price, bb_signal)
             # self.implement_bb_strategy(bbdf)
@@ -554,7 +554,7 @@ class TechnicalStrategy(Strategy):
             wir_df['WIR'] = -100 * ((wir_df['High_H'] - wir_df['Close']) /
                                     (wir_df['High_H'] - wir_df['Low_L']))
 
-            wir_df = wir_df.dropna()
+            # wir_df = wir_df.dropna()
             # print('wir_df: ------___\n', wir_df)
 
             # Williams %R Graph Plot
@@ -850,7 +850,8 @@ class TechnicalStrategy(Strategy):
             # except Exception as e:
             #     print("Error RSI Graph: ", e)
 
-            return rsi_df['RSI'].iloc[-2]
+            return rsi_df
+            # return rsi_df['RSI'].iloc[-2]
 
         except Exception as e:
             print("Error in RSI:", e)
@@ -878,7 +879,7 @@ class TechnicalStrategy(Strategy):
             macd_df['MACD_Signal'] = macd_df['MACD_Line'].ewm(
                 span=self._ema_signal).mean()
 
-            macd_df = macd_df.dropna()
+            # macd_df = macd_df.dropna()
             # print('macd_df: ---------_____\n', macd_df)
 
             # Moving Average Convergence Divergence Graph Plot
@@ -890,7 +891,8 @@ class TechnicalStrategy(Strategy):
 
             #     # cl = macd_df[['Close']].groupby(macd_df['DateTime']).sum()
             #     ml = macd_df[['MACD_Line']].groupby(macd_df['DateTime']).sum()
-            #     ms = macd_df[['MACD_Signal']].groupby(macd_df['DateTime']).sum()
+            #     ms = macd_df[['MACD_Signal']].groupby(
+            #         macd_df['DateTime']).sum()
 
             #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
             #     #         ax=ax, color='#322e2f', fontsize=5)
@@ -905,7 +907,8 @@ class TechnicalStrategy(Strategy):
             # except Exception as e:
             #     print("Error MACD Graph: ", e)
 
-            return macd_df['MACD_Line'].iloc[-2], macd_df['MACD_Signal'].iloc[-2]
+            return macd_df
+            # return macd_df['MACD_Line'].iloc[-2], macd_df['MACD_Signal'].iloc[-2]
 
         except Exception as e:
             print("Error in MACD:", e)
@@ -916,9 +919,9 @@ class TechnicalStrategy(Strategy):
           For long signal-> 1 || short signal -> -1 || no signal -> 0
         """
 
-        rsi = self._rsi()
-        macd_line, macd_signal = self._macd()
-        self._bollinger_band()
+        macd_value = self._macd()
+        rsi_value = self._rsi()
+        # self._bollinger_band()
         # self._atr()
         # self._adx()
         # self. _disp_in()
@@ -931,6 +934,11 @@ class TechnicalStrategy(Strategy):
         # self._psar()
         # self._kc()
         # self._env()
+
+        self.implement_wr_macd_strategy()
+
+        macd_line, macd_signal = macd_value['MACD_Line'].iloc[-2], macd_value['MACD_Signal'].iloc[-2]
+        rsi = rsi_value['RSI'].iloc[-2]
 
         if rsi < 30 and macd_line > macd_signal:
             return 1
@@ -947,17 +955,22 @@ class TechnicalStrategy(Strategy):
             if signal_result in [1, -1]:
                 self._open_position(signal_result)
 
-    def implement_bb_strategy(self, data):
+    # Implementing the Bollinger Bands Strategy Function.
+    def _implement_bb_strategy(self, data):
+        """
+        IF PREV_CLOSE > PREV_LOWERBB & CUR_CLOSE < CUR_LOWER_BB => BUY
+        IF PREV_CLOSE < PREV_UPPERBB & CUR_CLOSE > CUR_UPPER_BB => SELL
+        """
         buy_price = []
         sell_price = []
         bb_signal = []
         signal = 0
 
-        close = data['Close']
-        upper_bb = data['Upper_band']
-        lower_bb = data['Lower_band']
-
         try:
+            close = data['Close']
+            upper_bb = data['Upper_band']
+            lower_bb = data['Lower_band']
+
             for i in range(len(close)):
 
                 if close.iloc[i-1] > lower_bb.iloc[i-1] and close.iloc[i] < lower_bb.iloc[i]:
@@ -992,3 +1005,101 @@ class TechnicalStrategy(Strategy):
             print('Error in ibbs: ', e)
 
         return buy_price, sell_price, bb_signal
+
+    def implement_wr_macd_strategy(self,):
+        """
+        PREV.WR > -50 AND CUR.WR < -50 AND MACD.L > SIGNAL.L ==> BUY SIGNAL
+        PREV.WR < -50 AND CUR.WR > -50 AND MACD.L < SIGNAL.L ==> SELL SIGNAL
+        """
+        buy_price = []
+        sell_price = []
+        wr_macd_signal = []
+        signal = 0
+
+        wir = self._wir()
+        macd = self._macd()
+
+        s1 = pd.merge(wir, macd, how='outer', on=['timeframe', 'Open', 'High', 'Low', 'Close', 'Volume', 'DateTime'])
+        print('s1:_____ \n ', s1)
+        s1.dropna(inplace=True)
+        print('s1:_____ \n ', s1)
+
+        close = s1['Close']
+        wir_value = s1['WIR']
+        macd_line = s1['MACD_Line']
+        macd_signal = s1['MACD_Signal']
+
+        try:
+            for i in range(len(close)):
+                if wir_value.iloc[i-1] > -50 and wir_value.iloc[i] < -50 and macd_line.iloc[i] > macd_signal.iloc[i]:
+                    if signal != 1:
+                        buy_price.append(close.iloc[i])
+                        sell_price.append(np.nan)
+                        signal = 1
+                        wr_macd_signal.append(signal)
+                    else:
+                        buy_price.append(np.nan)
+                        sell_price.append(np.nan)
+                        wr_macd_signal.append(0)
+
+                elif wir_value.iloc[i-1] < -50 and wir_value.iloc[i] > -50 and macd_line.iloc[i] < macd_signal.iloc[i]:
+                    if signal != -1:
+                        buy_price.append(np.nan)
+                        sell_price.append(close.iloc[i])
+                        signal = -1
+                        wr_macd_signal.append(signal)
+                    else:
+                        buy_price.append(np.nan)
+                        sell_price.append(np.nan)
+                        wr_macd_signal.append(0)
+
+                else:
+                    buy_price.append(np.nan)
+                    sell_price.append(np.nan)
+                    wr_macd_signal.append(0)
+
+        except Exception as e:
+            print("Error iwirmacds: ", e)
+        
+        s1['wr_macd_buy_price'] = buy_price
+        s1['wr_macd_sell_price'] = sell_price
+        s1['wr_macd_signal'] = wr_macd_signal
+        print('s1:_____ \n ', s1)
+        
+        # Need Some Changes accordingly
+        # WIR MACD Graph Plot
+        try:
+            figure = plt.Figure(figsize=(46, 67), dpi=200)
+            ax = figure.add_subplot(111)
+
+            chart_type = FigureCanvasTkAgg(figure, self.root)
+            chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+
+            cl = s1[['Close']].groupby(s1['DateTime']).sum()
+            # wi = s1[['WIR']].groupby(s1['DateTime']).sum()
+            # ml = s1[['MACD_Line']].groupby(s1['DateTime']).sum()
+            # ms = s1[['MACD_Signal']].groupby(s1['DateTime']).sum()
+
+
+            cl.plot(kind='line', linestyle='-', linewidth=0.5,
+                    ax=ax, color='#322e2f', fontsize=5, alpha=0.3)
+            # wi.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #         ax=ax, color='#d72631', fontsize=5)
+            # ml.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #         ax=ax, color='#5c3c92', fontsize=5)
+            # ms.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #         ax=ax, color='#5c3c92', fontsize=5)
+
+            ax.scatter(s1['DateTime'], s1['wr_macd_buy_price'],
+                        color='g', marker='^', label='BUY',)
+            ax.scatter(s1['DateTime'], s1['wr_macd_sell_price'],
+                        color='r', marker='v', label='SELL',)
+
+            ax.legend(loc='lower right', fontsize=5)
+            ax.set_title('--WIR and MACD--')
+
+        except Exception as e:
+            print("Error WIRMACD Graph: ", e)
+
+        # print('buy_price, sell_price, wr_macd_signal: ', buy_price, sell_price, wr_macd_signal)
+        # return buy_price, sell_price, wr_macd_signal

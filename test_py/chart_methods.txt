@@ -11,6 +11,7 @@
 # df = bbdf[['Upper_band','Lower_band']].groupby(bbdf['DateTime']).sum()
 # df.plot(kind='line', legend=True, ax=ax, fontsize=10)
 # ax.set_title('Bollinger_Bands')
+
 # -- 2nd Method --
 # plt.figure(figsize=(2,3), dpi=200)
 # plt.plot(bbdf['timeframe'], bbdf['Upper_band'], label="Upperband")
