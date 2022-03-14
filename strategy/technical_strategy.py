@@ -59,6 +59,8 @@ class TechnicalStrategy(Strategy):
                     candle.timestamp / 1000).strftime("%H:%M")
                 main_dict['DateTime'].append(date_time)
 
+                # dt_str = datetime.datetime.fromtimestamp(trade.time / 1000).strftime("%b %d %H:%M")
+
             candle_df = pd.DataFrame.from_dict(main_dict)
             # print('Candle Dict df: \n', candle_df)
             candle_df = candle_df.dropna()
@@ -84,9 +86,14 @@ class TechnicalStrategy(Strategy):
             bbdf['Lower_band'] = (ma - bb_multiplier * std).round(1)
 
             # bbdf = bbdf.dropna()
+            bbdf.dropna(inplace=True)
 
             bbdf['buy_price'], bbdf['sell_price'], bbdf['bb_signal'] = self._implement_bb_strategy(
                 bbdf)
+            
+            # dataTypeSeries = bbdf.dtypes['DateTime']
+            # print('dataTypeSeries:________ \n', dataTypeSeries)
+
             # print("buy, sell, bb_signal:", buy_price, sell_price, bb_signal)
             # self.implement_bb_strategy(bbdf)
 
@@ -549,10 +556,10 @@ class TechnicalStrategy(Strategy):
             df = self._candle_dict()
             wir_df = df.copy()
 
-            wir_df['High_H'] = wir_df['High'].rolling(lookback).max()
-            wir_df['Low_L'] = wir_df['Low'].rolling(lookback).min()
-            wir_df['WIR'] = -100 * ((wir_df['High_H'] - wir_df['Close']) /
-                                    (wir_df['High_H'] - wir_df['Low_L']))
+            high_h = wir_df['High'].rolling(lookback).max()
+            low_l = wir_df['Low'].rolling(lookback).min()
+            wir_df['WIR'] = -100 * ((high_h - wir_df['Close']) /
+                                    (high_h - low_l))
 
             # wir_df = wir_df.dropna()
             # print('wir_df: ------___\n', wir_df)
@@ -921,7 +928,7 @@ class TechnicalStrategy(Strategy):
 
         macd_value = self._macd()
         rsi_value = self._rsi()
-        # self._bollinger_band()
+        self._bollinger_band()
         # self._atr()
         # self._adx()
         # self. _disp_in()
@@ -935,7 +942,7 @@ class TechnicalStrategy(Strategy):
         # self._kc()
         # self._env()
 
-        self.implement_wr_macd_strategy()
+        # self.implement_wr_macd_strategy()
 
         macd_line, macd_signal = macd_value['MACD_Line'].iloc[-2], macd_value['MACD_Signal'].iloc[-2]
         rsi = rsi_value['RSI'].iloc[-2]
@@ -1020,9 +1027,7 @@ class TechnicalStrategy(Strategy):
         macd = self._macd()
 
         s1 = pd.merge(wir, macd, how='outer', on=['timeframe', 'Open', 'High', 'Low', 'Close', 'Volume', 'DateTime'])
-        print('s1:_____ \n ', s1)
         s1.dropna(inplace=True)
-        print('s1:_____ \n ', s1)
 
         close = s1['Close']
         wir_value = s1['WIR']
@@ -1060,12 +1065,12 @@ class TechnicalStrategy(Strategy):
 
         except Exception as e:
             print("Error iwirmacds: ", e)
-        
+
         s1['wr_macd_buy_price'] = buy_price
         s1['wr_macd_sell_price'] = sell_price
         s1['wr_macd_signal'] = wr_macd_signal
         print('s1:_____ \n ', s1)
-        
+
         # Need Some Changes accordingly
         # WIR MACD Graph Plot
         try:
@@ -1079,7 +1084,6 @@ class TechnicalStrategy(Strategy):
             # wi = s1[['WIR']].groupby(s1['DateTime']).sum()
             # ml = s1[['MACD_Line']].groupby(s1['DateTime']).sum()
             # ms = s1[['MACD_Signal']].groupby(s1['DateTime']).sum()
-
 
             cl.plot(kind='line', linestyle='-', linewidth=0.5,
                     ax=ax, color='#322e2f', fontsize=5, alpha=0.3)
