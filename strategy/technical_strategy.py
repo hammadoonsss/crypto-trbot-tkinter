@@ -4,9 +4,12 @@ import pandas as pd
 import tkinter as tk
 
 # Matplotlib Packages
+import matplotlib
+matplotlib.use("TkAgg")
 from matplotlib import style
 from matplotlib import pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
 
 # TA-Lib Package
 import talib
@@ -56,7 +59,7 @@ class TechnicalStrategy(Strategy):
                 main_dict['Close'].append(candle.close)
                 main_dict['Volume'].append(candle.volume)
                 date_time = datetime.datetime.fromtimestamp(
-                    candle.timestamp / 1000).strftime("%H:%M")
+                    candle.timestamp / 1000).strftime("%D %H:%M")
                 main_dict['DateTime'].append(date_time)
 
                 # dt_str = datetime.datetime.fromtimestamp(trade.time / 1000).strftime("%b %d %H:%M")
@@ -90,12 +93,7 @@ class TechnicalStrategy(Strategy):
 
             bbdf['buy_price'], bbdf['sell_price'], bbdf['bb_signal'] = self._implement_bb_strategy(
                 bbdf)
-            
-            # dataTypeSeries = bbdf.dtypes['DateTime']
-            # print('dataTypeSeries:________ \n', dataTypeSeries)
-
             # print("buy, sell, bb_signal:", buy_price, sell_price, bb_signal)
-            # self.implement_bb_strategy(bbdf)
 
             print("bbdf: \n", bbdf)
 
@@ -208,19 +206,19 @@ class TechnicalStrategy(Strategy):
             minus_dm = np.where((downmove > upmove) &
                                 (downmove > 0), downmove, 0.0)
 
-            adx_df['plus_di'] = 100 * (plus_dm/atr['ATR']).ewm(alpha=1/lookback,
+            adx_df['Plus_DI'] = 100 * (plus_dm/atr['ATR']).ewm(alpha=1/lookback,
                                                                min_periods=lookback).mean()
-            adx_df['minus_di'] = 100 * (minus_dm/atr['ATR']).ewm(alpha=1/lookback,
+            adx_df['Minus_DI'] = 100 * (minus_dm/atr['ATR']).ewm(alpha=1/lookback,
                                                                  min_periods=lookback).mean()
 
-            pmm = adx_df['plus_di'] - adx_df['minus_di']
-            ppm = adx_df['plus_di'] + adx_df['minus_di']
+            pmm = adx_df['Plus_DI'] - adx_df['Minus_DI']
+            ppm = adx_df['Plus_DI'] + adx_df['Minus_DI']
 
             adx_df["ADX"] = 100 * abs(pmm / ppm).ewm(
                 alpha=1/lookback, min_periods=lookback).mean()
 
             adx_df = adx_df.dropna()
-            # print('adx_df:____ \n', adx_df)
+            print('adx_df:____^^ \n', adx_df)
 
             # Average Directional Index Graph Plot
             # try:
@@ -230,18 +228,18 @@ class TechnicalStrategy(Strategy):
             #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
             #     # cl = adx_df[['Close']].groupby(adx_df['DateTime']).sum()
-            #     at = atr[['ATR']].groupby(adx_df['DateTime']).sum()
+            #     # at = atr[['ATR']].groupby(adx_df['DateTime']).sum()
             #     ad = adx_df[['ADX']].groupby(adx_df['DateTime']).sum()
 
             #     # cl.plot(kind='line', linestyle='-', linewidth=0.5,
             #     #         ax=ax, color='#322e2f', fontsize=5)
-            #     at.plot(kind='line', linestyle='-.', linewidth=0.5,
-            #             ax=ax, color='#d72631', fontsize=5)
+            #     # at.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #     #         ax=ax, color='#d72631', fontsize=5)
             #     ad.plot(kind='line', linestyle='-.', linewidth=0.5,
             #             ax=ax, color='#5c3c92', fontsize=5)
 
             #     ax.legend(loc='lower right', fontsize=5)
-            #     ax.set_title('--Average True Range & Average Directional Index--')
+            #     ax.set_title('--Average Directional Index--')
 
             # except Exception as e:
             #     print("Error ADX Graph: ", e)
@@ -928,7 +926,7 @@ class TechnicalStrategy(Strategy):
 
         macd_value = self._macd()
         rsi_value = self._rsi()
-        self._bollinger_band()
+        # self._bollinger_band()
         # self._atr()
         # self._adx()
         # self. _disp_in()
@@ -942,7 +940,8 @@ class TechnicalStrategy(Strategy):
         # self._kc()
         # self._env()
 
-        # self.implement_wr_macd_strategy()
+        # self.implement_wir_macd_strategy()
+        self._implement_adx_strategy()
 
         macd_line, macd_signal = macd_value['MACD_Line'].iloc[-2], macd_value['MACD_Signal'].iloc[-2]
         rsi = rsi_value['RSI'].iloc[-2]
@@ -962,18 +961,20 @@ class TechnicalStrategy(Strategy):
             if signal_result in [1, -1]:
                 self._open_position(signal_result)
 
+    # Strategies Functions
+
     # Implementing the Bollinger Bands Strategy Function.
     def _implement_bb_strategy(self, data):
         """
         IF PREV_CLOSE > PREV_LOWERBB & CUR_CLOSE < CUR_LOWER_BB => BUY
         IF PREV_CLOSE < PREV_UPPERBB & CUR_CLOSE > CUR_UPPER_BB => SELL
         """
-        buy_price = []
-        sell_price = []
-        bb_signal = []
-        signal = 0
-
         try:
+            buy_price = []
+            sell_price = []
+            bb_signal = []
+            signal = 0
+
             close = data['Close']
             upper_bb = data['Upper_band']
             lower_bb = data['Lower_band']
@@ -1013,63 +1014,66 @@ class TechnicalStrategy(Strategy):
 
         return buy_price, sell_price, bb_signal
 
-    def implement_wr_macd_strategy(self,):
+    # Implementing the WIR and MACD Strategy Function.
+    def implement_wir_macd_strategy(self):
         """
-        PREV.WR > -50 AND CUR.WR < -50 AND MACD.L > SIGNAL.L ==> BUY SIGNAL
-        PREV.WR < -50 AND CUR.WR > -50 AND MACD.L < SIGNAL.L ==> SELL SIGNAL
+        PREV.WIR > -50 AND CUR.WIR < -50 AND MACD.L > SIGNAL.L ==> BUY SIGNAL
+        PREV.WIR < -50 AND CUR.WIR > -50 AND MACD.L < SIGNAL.L ==> SELL SIGNAL
         """
-        buy_price = []
-        sell_price = []
-        wr_macd_signal = []
-        signal = 0
-
-        wir = self._wir()
-        macd = self._macd()
-
-        s1 = pd.merge(wir, macd, how='outer', on=['timeframe', 'Open', 'High', 'Low', 'Close', 'Volume', 'DateTime'])
-        s1.dropna(inplace=True)
-
-        close = s1['Close']
-        wir_value = s1['WIR']
-        macd_line = s1['MACD_Line']
-        macd_signal = s1['MACD_Signal']
-
         try:
+            buy_price = []
+            sell_price = []
+            wir_macd_signal = []
+            signal = 0
+
+            wir = self._wir()
+            macd = self._macd()
+
+            s1 = pd.merge(wir, macd, how='outer',
+                          on=['timeframe', 'Open', 'High', 'Low', 'Close', 'Volume', 'DateTime'])
+            s1.dropna(inplace=True)
+
+            close = s1['Close']
+            wir_value = s1['WIR']
+            macd_line = s1['MACD_Line']
+            macd_signal = s1['MACD_Signal']
+
             for i in range(len(close)):
                 if wir_value.iloc[i-1] > -50 and wir_value.iloc[i] < -50 and macd_line.iloc[i] > macd_signal.iloc[i]:
                     if signal != 1:
                         buy_price.append(close.iloc[i])
                         sell_price.append(np.nan)
                         signal = 1
-                        wr_macd_signal.append(signal)
+                        wir_macd_signal.append(signal)
                     else:
                         buy_price.append(np.nan)
                         sell_price.append(np.nan)
-                        wr_macd_signal.append(0)
+                        wir_macd_signal.append(0)
 
                 elif wir_value.iloc[i-1] < -50 and wir_value.iloc[i] > -50 and macd_line.iloc[i] < macd_signal.iloc[i]:
                     if signal != -1:
                         buy_price.append(np.nan)
                         sell_price.append(close.iloc[i])
                         signal = -1
-                        wr_macd_signal.append(signal)
+                        wir_macd_signal.append(signal)
                     else:
                         buy_price.append(np.nan)
                         sell_price.append(np.nan)
-                        wr_macd_signal.append(0)
+                        wir_macd_signal.append(0)
 
                 else:
                     buy_price.append(np.nan)
                     sell_price.append(np.nan)
-                    wr_macd_signal.append(0)
+                    wir_macd_signal.append(0)
+
+            s1['wir_macd_buy_price'] = buy_price
+            s1['wir_macd_sell_price'] = sell_price
+            s1['wir_macd_signal'] = wir_macd_signal
+
+            # print('s1:_____ \n ', s1)
 
         except Exception as e:
             print("Error iwirmacds: ", e)
-
-        s1['wr_macd_buy_price'] = buy_price
-        s1['wr_macd_sell_price'] = sell_price
-        s1['wr_macd_signal'] = wr_macd_signal
-        print('s1:_____ \n ', s1)
 
         # Need Some Changes accordingly
         # WIR MACD Graph Plot
@@ -1094,10 +1098,10 @@ class TechnicalStrategy(Strategy):
             # ms.plot(kind='line', linestyle='-.', linewidth=0.5,
             #         ax=ax, color='#5c3c92', fontsize=5)
 
-            ax.scatter(s1['DateTime'], s1['wr_macd_buy_price'],
-                        color='g', marker='^', label='BUY',)
-            ax.scatter(s1['DateTime'], s1['wr_macd_sell_price'],
-                        color='r', marker='v', label='SELL',)
+            ax.scatter(s1['DateTime'], s1['wir_macd_buy_price'],
+                       color='g', marker='^', label='BUY',)
+            ax.scatter(s1['DateTime'], s1['wir_macd_sell_price'],
+                       color='r', marker='v', label='SELL',)
 
             ax.legend(loc='lower right', fontsize=5)
             ax.set_title('--WIR and MACD--')
@@ -1105,5 +1109,108 @@ class TechnicalStrategy(Strategy):
         except Exception as e:
             print("Error WIRMACD Graph: ", e)
 
-        # print('buy_price, sell_price, wr_macd_signal: ', buy_price, sell_price, wr_macd_signal)
-        # return buy_price, sell_price, wr_macd_signal
+    # Implementation of the ADX Strategy Function.
+    def _implement_adx_strategy(self):
+        """
+        IF PREV.ADX < 25 AND CUR.ADX > 25 AND + DI LINE > - DI LINE ==> BUY
+        IF PREV.ADX < 25 AND CUR.ADX > 25 AND + DI LINE < - DI LINE ==> SELL
+        """
+        try:
+
+            buy_price = []
+            sell_price = []
+            adx_signal = []
+            signal = 0
+
+            adx = self._adx()
+
+            close = adx['Close']
+            datetime = adx['DateTime']
+            ndi = adx['Minus_DI']
+            pdi = adx['Plus_DI']
+            adx_value = adx['ADX']
+
+            for i in range(len(close)):
+
+                if adx_value.iloc[i-1] < 25 and adx_value.iloc[i] > 25 and pdi.iloc[i] > ndi.iloc[i]:
+                    if signal != 1:
+                        buy_price.append(close.iloc[i])
+                        sell_price.append(np.nan)
+                        signal = 1
+                        adx_signal.append(signal)
+                    else:
+                        buy_price.append(np.nan)
+                        sell_price.append(np.nan)
+                        adx_signal.append(0)
+
+                elif adx_value.iloc[i-1] < 25 and adx_value.iloc[i] > 25 and ndi.iloc[i] > pdi.iloc[i]:
+                    if signal != -1:
+                        buy_price.append(np.nan)
+                        sell_price.append(close.iloc[i])
+                        signal = -1
+                        adx_signal.append(signal)
+                    else:
+                        buy_price.append(np.nan)
+                        sell_price.append(np.nan)
+                        adx_signal.append(0)
+
+                else:
+                    buy_price.append(np.nan)
+                    sell_price.append(np.nan)
+                    adx_signal.append(0)
+
+            # print("adx_buy_price, adx_sell_price, adx_signal: ---- \n",
+            #       buy_price, sell_price, adx_signal)
+
+        except Exception as e:
+            print("Error in iadx: ", e)
+
+        # ADX Strategy Graph Plot
+        try:
+            f = Figure(figsize=(5,7), dpi=100)
+            a = f.add_subplot(111)
+
+            canvas = FigureCanvasTkAgg(f, self.root)
+            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+            toolbar = NavigationToolbar2Tk(canvas, self.root)
+            toolbar.update()
+            canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+            cl = close.groupby(datetime).sum()
+            cl.plot(kind='line', linestyle='-', linewidth=0.5,
+                    ax=a, color='#322e2f', fontsize=12, alpha=0.3)
+
+            a.scatter(datetime, buy_price,
+                       color='g', marker='^', label='BUY',)
+            a.scatter(datetime, sell_price,
+                       color='r', marker='v', label='SELL',)
+            
+            a.legend(loc='lower right', fontsize=7)
+            a.set_title('--ADX Price--')
+
+            print("_________________________________________________")
+
+            f1 = Figure(figsize=(5,7), dpi=100)
+            a1 = f1.add_subplot(211)
+            
+            canvas1 = FigureCanvasTkAgg(f1, self.root)
+            canvas1.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+            toolbar = NavigationToolbar2Tk(canvas1, self.root)
+            toolbar.update()
+            canvas1._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+            pd = pdi.groupby(datetime).sum()
+            nd = ndi.groupby(datetime).sum()
+
+            pd.plot(kind='line', linestyle='-.', linewidth=0.5,
+                    ax=a1, color='#d72631', fontsize=5)
+            nd.plot(kind='line', linestyle='-.', linewidth=0.5,
+                    ax=a1, color='#5c3c92', fontsize=5)
+
+            a1.legend(loc='lower right', fontsize=5)
+            a1.set_title('--ADX 2--')
+
+        except Exception as e:
+            print("Error IADX Graph: ", e)

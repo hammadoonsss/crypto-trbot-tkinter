@@ -119,3 +119,52 @@ try:
 
 except Exception as e:
     print("Error KC Graph: ", e)
+
+
+# ADX Strategy Graph Plot
+try:
+    f = Figure(figsize=(5,7), dpi=100)
+    a = f.add_subplot(111)
+    
+    # a.plot([1,2,4,6,7,8,36,45],[3,12,23,34,46,78,98,100])
+
+    canvas = FigureCanvasTkAgg(f, self.root)
+    canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    toolbar = NavigationToolbar2Tk(canvas, self.root)
+    toolbar.update()
+    canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+    cl = close.groupby(datetime).sum()
+    cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            ax=a, color='#322e2f', fontsize=12, alpha=0.3)
+
+    a.scatter(datetime, buy_price,
+                color='g', marker='^', label='BUY',)
+    a.scatter(datetime, sell_price,
+                color='r', marker='v', label='SELL',)
+    
+    a.legend(loc='lower right', fontsize=7)
+    a.set_title('--ADX Price--')
+
+    # figure = plt.Figure(figsize=(46, 67), dpi=200)
+    # ax = figure.add_subplot(111)
+
+    # chart_type = FigureCanvasTkAgg(figure, self.root)
+    # chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+
+    # cl = close.groupby(datetime).sum()
+    # cl.plot(kind='line', linestyle='-', linewidth=0.5,
+    #         ax=ax, color='#322e2f', fontsize=5, alpha=0.3)
+
+    # ax.scatter(datetime, buy_price,
+    #            color='g', marker='^', label='BUY',)
+    # ax.scatter(datetime, sell_price,
+    #            color='r', marker='v', label='SELL',)
+    
+    # ax.legend(loc='lower right', fontsize=5)
+    # ax.set_title('--ADX Price--')
+
+except Exception as e:
+    print("Error IADX Graph: ", e)
+
