@@ -1191,26 +1191,26 @@ class TechnicalStrategy(Strategy):
 
             print("_________________________________________________")
 
-            f1 = Figure(figsize=(5,7), dpi=100)
-            a1 = f1.add_subplot(211)
+            # f1 = Figure(figsize=(5,7), dpi=100)
+            # a1 = f1.add_subplot(211)
             
-            canvas1 = FigureCanvasTkAgg(f1, self.root)
-            canvas1.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+            # canvas1 = FigureCanvasTkAgg(f1, self.root)
+            # canvas1.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-            toolbar = NavigationToolbar2Tk(canvas1, self.root)
-            toolbar.update()
-            canvas1._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+            # toolbar1 = NavigationToolbar2Tk(canvas1, self.root)
+            # toolbar1.update()
+            # canvas1._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
-            pd = pdi.groupby(datetime).sum()
-            nd = ndi.groupby(datetime).sum()
+            # pd = pdi.groupby(datetime).sum()
+            # nd = ndi.groupby(datetime).sum()
 
-            pd.plot(kind='line', linestyle='-.', linewidth=0.5,
-                    ax=a1, color='#d72631', fontsize=5)
-            nd.plot(kind='line', linestyle='-.', linewidth=0.5,
-                    ax=a1, color='#5c3c92', fontsize=5)
+            # pd.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #         ax=a1, color='#d72631', fontsize=5)
+            # nd.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #         ax=a1, color='#5c3c92', fontsize=5)
 
-            a1.legend(loc='lower right', fontsize=5)
-            a1.set_title('--ADX 2--')
+            # a1.legend(loc='lower right', fontsize=5)
+            # a1.set_title('--ADX 2--')
 
         except Exception as e:
             print("Error IADX Graph: ", e)
