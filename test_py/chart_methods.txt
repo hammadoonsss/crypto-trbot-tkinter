@@ -168,3 +168,14 @@ try:
 except Exception as e:
     print("Error IADX Graph: ", e)
 
+
+# --Bollinger_Bands--
+# bbdf['Close'].plot(label = 'CLOSE PRICES', alpha = 0.3)
+# bbdf['Upper_band'].plot(label = 'UPPER BB', linestyle = '--', linewidth = 1, color = 'red')
+# ma.plot(label = 'MIDDLE BB', linestyle = '-.', linewidth = 1.2, color = 'grey')
+# bbdf['Lower_band'].plot(label = 'LOWER BB', linestyle = '--', linewidth = 1, color = 'blue')
+# plt.scatter(bbdf['DateTime'], bbdf['buy_price'], marker = '^', color = 'green', label = 'BUY', s = 200)
+# plt.scatter(bbdf['DateTime'], bbdf['sell_price'], marker = 'v', color = 'red', label = 'SELL', s = 200)
+# plt.title(' BB STRATEGY TRADING SIGNALS')
+# plt.legend(loc = 'upper left')
+# plt.show()

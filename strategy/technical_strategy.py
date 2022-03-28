@@ -89,55 +89,39 @@ class TechnicalStrategy(Strategy):
             bbdf['Lower_band'] = (ma - bb_multiplier * std).round(1)
 
             # bbdf = bbdf.dropna()
-            bbdf.dropna(inplace=True)
-
-            bbdf['buy_price'], bbdf['sell_price'], bbdf['bb_signal'] = self._implement_bb_strategy(
-                bbdf)
-            # print("buy, sell, bb_signal:", buy_price, sell_price, bb_signal)
+            # bbdf.dropna(inplace=True)
 
             print("bbdf: \n", bbdf)
 
             # Bollinger Band Graph Plot
-            try:
-                figure = plt.Figure(figsize=(46, 67), dpi=200)
-                ax = figure.add_subplot(111)
+            # try:
+            #     figure = plt.Figure(figsize=(46, 67), dpi=200)
+            #     ax = figure.add_subplot(111)
 
-                chart_type = FigureCanvasTkAgg(figure, self.root)
-                chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
-                # scatter3 = FigureCanvasTkAgg(figure, self.root)
-                # scatter3.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+            #     chart_type = FigureCanvasTkAgg(figure, self.root)
+            #     chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
 
-                cl = bbdf[['Close']].groupby(bbdf['DateTime']).sum()
-                ub = bbdf[['Upper_band']].groupby(bbdf['DateTime']).sum()
-                lb = bbdf[['Lower_band']].groupby(bbdf['DateTime']).sum()
+            #     cl = bbdf[['Close']].groupby(bbdf['DateTime']).sum()
+            #     ub = bbdf[['Upper_band']].groupby(bbdf['DateTime']).sum()
+            #     lb = bbdf[['Lower_band']].groupby(bbdf['DateTime']).sum()
 
-                cl.plot(kind='line', linestyle='-', linewidth=0.5,
-                        ax=ax, color='#322e2f', fontsize=5, alpha=0.3)
-                ub.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#d72631', fontsize=5)
-                lb.plot(kind='line', linestyle='-.', linewidth=0.5,
-                        ax=ax, color='#5c3c92', fontsize=5)
+            #     cl.plot(kind='line', linestyle='-', linewidth=0.5,
+            #             ax=ax, color='#322e2f', fontsize=5, alpha=0.3)
+            #     ub.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#d72631', fontsize=5)
+            #     lb.plot(kind='line', linestyle='-.', linewidth=0.5,
+            #             ax=ax, color='#5c3c92', fontsize=5)
 
-                ax.scatter(bbdf['DateTime'], bbdf['buy_price'],
-                           color='g', marker='^', label='BUY',)
-                ax.scatter(bbdf['DateTime'], bbdf['sell_price'],
-                           color='r', marker='v', label='SELL',)
+            #     ax.scatter(bbdf['DateTime'], bbdf['buy_price'],
+            #                color='g', marker='^', label='BUY',)
+            #     ax.scatter(bbdf['DateTime'], bbdf['sell_price'],
+            #                color='r', marker='v', label='SELL',)
 
-                ax.legend(loc='lower right', fontsize=5)
-                ax.set_title('--Bollinger Band--')
+            #     ax.legend(loc='lower right', fontsize=5)
+            #     ax.set_title('--Bollinger Band--')
 
-                # bbdf['Close'].plot(label = 'CLOSE PRICES', alpha = 0.3)
-                # bbdf['Upper_band'].plot(label = 'UPPER BB', linestyle = '--', linewidth = 1, color = 'red')
-                # ma.plot(label = 'MIDDLE BB', linestyle = '-.', linewidth = 1.2, color = 'grey')
-                # bbdf['Lower_band'].plot(label = 'LOWER BB', linestyle = '--', linewidth = 1, color = 'blue')
-                # plt.scatter(bbdf['DateTime'], bbdf['buy_price'], marker = '^', color = 'green', label = 'BUY', s = 200)
-                # plt.scatter(bbdf['DateTime'], bbdf['sell_price'], marker = 'v', color = 'red', label = 'SELL', s = 200)
-                # plt.title(' BB STRATEGY TRADING SIGNALS')
-                # plt.legend(loc = 'upper left')
-                # plt.show()
-
-            except Exception as e:
-                print("Error BB Graph: ", e)
+            # except Exception as e:
+            #     print("Error BB Graph: ", e)
 
             return bbdf
 
@@ -724,8 +708,8 @@ class TechnicalStrategy(Strategy):
             kc_df['kc_upper'] = close_ema + multi_atr
             kc_df['kc_lower'] = close_ema - multi_atr
 
-            kc_df = kc_df.dropna()
-            # print('kc_df: \n', kc_df)
+            # kc_df = kc_df.dropna()
+            print('kc_df: \n', kc_df)
 
             # Keltner Channel Graph Plot
             # try:
@@ -754,6 +738,8 @@ class TechnicalStrategy(Strategy):
 
             # except Exception as e:
             #     print("Error KC Graph: ", e)
+
+            return kc_df
 
         except Exception as e:
             print("Error in KC: ", e)
@@ -831,8 +817,8 @@ class TechnicalStrategy(Strategy):
             rs = avg_gain/avg_loss
 
             rsi_df['RSI'] = (100 - (100 / (1 + rs))).round(2)
-            rsi_df = rsi_df.dropna()
-            # print('rsi_df: _______---\n', rsi_df)
+            # rsi_df = rsi_df.dropna()
+            print('rsi_df: _______---\n', rsi_df)
 
             # Relative Strength Index Graph Plot
             # try:
@@ -940,8 +926,10 @@ class TechnicalStrategy(Strategy):
         # self._kc()
         # self._env()
 
+        # self._implement_bb_strategy()
         # self.implement_wir_macd_strategy()
-        self._implement_adx_strategy()
+        # self._implement_adx_strategy()
+        self._implement_bb_kc_rsi_strategy()
 
         macd_line, macd_signal = macd_value['MACD_Line'].iloc[-2], macd_value['MACD_Signal'].iloc[-2]
         rsi = rsi_value['RSI'].iloc[-2]
@@ -964,7 +952,7 @@ class TechnicalStrategy(Strategy):
     # Strategies Functions
 
     # Implementing the Bollinger Bands Strategy Function.
-    def _implement_bb_strategy(self, data):
+    def _implement_bb_strategy(self):
         """
         IF PREV_CLOSE > PREV_LOWERBB & CUR_CLOSE < CUR_LOWER_BB => BUY
         IF PREV_CLOSE < PREV_UPPERBB & CUR_CLOSE > CUR_UPPER_BB => SELL
@@ -974,6 +962,8 @@ class TechnicalStrategy(Strategy):
             sell_price = []
             bb_signal = []
             signal = 0
+
+            data = self._bollinger_band()
 
             close = data['Close']
             upper_bb = data['Upper_band']
@@ -1009,10 +999,43 @@ class TechnicalStrategy(Strategy):
                     buy_price.append(np.nan)
                     sell_price.append(np.nan)
                     bb_signal.append(0)
+
+            data['bb_buy_price'] = buy_price
+            data['bb_sell_price'] = sell_price
+            data['bb_signal'] = bb_signal
+
         except Exception as e:
             print('Error in ibbs: ', e)
+        
+        # Bollinger Band Graph Plot
+        try:
+            figure = plt.Figure(figsize=(46, 67), dpi=200)
+            ax = figure.add_subplot(111)
 
-        return buy_price, sell_price, bb_signal
+            chart_type = FigureCanvasTkAgg(figure, self.root)
+            chart_type.get_tk_widget().pack(side=tk.LEFT, fill=tk.BOTH)
+
+            cl = data[['Close']].groupby(data['DateTime']).sum()
+            ub = data[['Upper_band']].groupby(data['DateTime']).sum()
+            lb = data[['Lower_band']].groupby(data['DateTime']).sum()
+
+            cl.plot(kind='line', linestyle='-', linewidth=0.5,
+                    ax=ax, color='#322e2f', fontsize=5, alpha=0.3)
+            ub.plot(kind='line', linestyle='-.', linewidth=0.5,
+                    ax=ax, color='#d72631', fontsize=5)
+            lb.plot(kind='line', linestyle='-.', linewidth=0.5,
+                    ax=ax, color='#5c3c92', fontsize=5)
+
+            ax.scatter(data['DateTime'], data['bb_buy_price'],
+                        color='g', marker='^', label='BUY',)
+            ax.scatter(data['DateTime'], data['bb_sell_price'],
+                        color='r', marker='v', label='SELL',)
+
+            ax.legend(loc='lower right', fontsize=5)
+            ax.set_title('--Bollinger Band--')
+
+        except Exception as e:
+            print("Error ibbs Graph: ", e)
 
     # Implementing the WIR and MACD Strategy Function.
     def implement_wir_macd_strategy(self):
@@ -1214,3 +1237,70 @@ class TechnicalStrategy(Strategy):
 
         except Exception as e:
             print("Error IADX Graph: ", e)
+
+    # Implementation of BB, KC, and RSI Strategy Function.
+    def _implement_bb_kc_rsi_strategy(self):
+
+        try:
+            buy_price = []
+            sell_price = []
+            bb_kc_rsi_signal = []
+            signal = 0
+
+            bb_df = self._bollinger_band()
+            kc_df = self._kc()
+            rsi_df = self._rsi()
+
+            bb_kc = pd.merge(bb_df, kc_df, how='outer',
+                          on=['timeframe', 'Open', 'High', 'Low', 'Close', 'Volume', 'DateTime'])
+            print('bb_kc: \n', bb_kc)
+
+            bb_kc_rsi = pd.merge(bb_kc, rsi_df, how='outer',
+                          on=['timeframe', 'Open', 'High', 'Low', 'Close', 'Volume', 'DateTime'])
+
+            bb_kc_rsi.dropna(inplace=True)
+            print('bb_kc_rsi2: \n', bb_kc_rsi)
+
+            close = bb_kc_rsi['Close']
+            upper_bb = bb_kc_rsi['Upper_band']
+            lower_bb = bb_kc_rsi['Lower_band']
+            kc_upper = bb_kc_rsi['kc_upper']
+            kc_lower = bb_kc_rsi['kc_lower']
+            rsi_value = bb_kc_rsi['RSI']
+
+            for i in range(len(close)):
+                if lower_bb.iloc[i] < kc_lower.iloc[i] and upper_bb.iloc[i] > kc_upper.iloc[i] and rsi_value.iloc[i] < 30:
+                    if signal != 1:
+                        buy_price.append(close.iloc[i])
+                        sell_price.append(np.nan)
+                        signal = 1
+                        bb_kc_rsi_signal.append(signal)
+                    else:
+                        buy_price.append(np.nan)
+                        sell_price.append(np.nan)
+                        bb_kc_rsi_signal.append(0)
+                        
+                elif lower_bb.iloc[i] < kc_lower.iloc[i] and upper_bb.iloc[i] > kc_upper.iloc[i] and rsi_value.iloc[i] > 70:
+                    if signal != -1:
+                        buy_price.append(np.nan)
+                        sell_price.append(close[i])
+                        signal = -1
+                        bb_kc_rsi_signal.append(signal)
+                    else:
+                        buy_price.append(np.nan)
+                        sell_price.append(np.nan)
+                        bb_kc_rsi_signal.append(0)
+                else:
+                    buy_price.append(np.nan)
+                    sell_price.append(np.nan)
+                    bb_kc_rsi_signal.append(0)
+
+            bb_kc_rsi['bb_kc_rsi_buy_price'] = buy_price
+            bb_kc_rsi['bb_kc_rsi_sell_price'] = sell_price
+            bb_kc_rsi['bb_kc_rsi_signal'] = bb_kc_rsi_signal
+
+            print('bb_kc_rsi:3 \n', bb_kc_rsi)
+
+        except Exception as e:
+            print("Error BBKCRSI Graph: ", e)
+
