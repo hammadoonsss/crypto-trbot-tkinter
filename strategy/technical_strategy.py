@@ -1303,4 +1303,3 @@ class TechnicalStrategy(Strategy):
 
         except Exception as e:
             print("Error BBKCRSI Graph: ", e)
-
